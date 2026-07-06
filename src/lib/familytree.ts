@@ -170,7 +170,7 @@ export const DEFAULT_FAMILY_TREE_VISUAL_CONFIG: FamilyTreeVisualConfig = {
     },
     step: {
       label: "Step / external",
-      color: "#f97316",
+      color: "#eab308",
       lineStyle: "dotted",
       visible: true,
       lockedVisible: true,
@@ -1107,10 +1107,12 @@ function renderUnion(
   for (const bottom of partnerBottoms) {
     drawConnector(bottom, unionPoint, context, relationType);
   }
-  if (anchor) drawConnector(anchor, unionPoint, context, relationType);
+  if (anchor) drawConnector(anchor, unionPoint, context, "biological");
+
+  const bloodlineRule = context.visualConfig.relations.biological;
 
   context.parts.push(
-    `<circle cx="${round(unionPoint.x)}" cy="${round(unionPoint.y)}" r="5" fill="${attr(relationRule.color)}"/>`,
+    `<circle cx="${round(unionPoint.x)}" cy="${round(unionPoint.y)}" r="5" fill="${attr(bloodlineRule.color)}"/>`,
   );
 
   if (layout.children.length) {
@@ -1142,16 +1144,19 @@ function renderUnion(
         layout.children[layout.children.length - 1].subtreeWidth +
         layout.children[layout.children.length - 1].anchorCenterOffset;
 
+      const minX = Math.min(unionPoint.x, firstChildCenter);
+      const maxX = Math.max(unionPoint.x, lastChildCenter);
+
       drawConnector(
         unionPoint,
         { x: unionPoint.x, y: horizontalY },
         context,
-        relationType,
+        "biological",
       );
 
-      if (layout.children.length > 1) {
+      if (minX !== maxX) {
         context.parts.push(
-          `<path d="M ${round(firstChildCenter)} ${round(horizontalY)} H ${round(lastChildCenter)}" fill="none" stroke="${attr(relationRule.color)}" stroke-width="2" stroke-linecap="round"${dash(relationRule.lineStyle)}/>`,
+          `<path d="M ${round(minX)} ${round(horizontalY)} H ${round(maxX)}" fill="none" stroke="${attr(bloodlineRule.color)}" stroke-width="2" stroke-linecap="round"${dash(bloodlineRule.lineStyle)}/>`,
         );
       }
 
@@ -1297,8 +1302,7 @@ function elbowPath(from: Point, to: Point): string {
   if (Math.abs(from.x - to.x) < 0.5 || Math.abs(from.y - to.y) < 0.5) {
     return `M ${round(from.x)} ${round(from.y)} L ${round(to.x)} ${round(to.y)}`;
   }
-  const midY = from.y + (to.y - from.y) / 2;
-  return `M ${round(from.x)} ${round(from.y)} V ${round(midY)} H ${round(to.x)} V ${round(to.y)}`;
+  return `M ${round(from.x)} ${round(from.y)} L ${round(from.x)} ${round(to.y)} L ${round(to.x)} ${round(to.y)}`;
 }
 
 function dash(lineStyle: FamilyTreeLineStyle): string {
@@ -1395,7 +1399,8 @@ function isSpace(value: string | undefined): boolean {
   return value === undefined || /\s/.test(value);
 }
 
-function text(value: string): string {
+function text(value: string | undefined): string {
+  if (!value) return "";
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
