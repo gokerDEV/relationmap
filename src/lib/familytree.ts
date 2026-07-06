@@ -80,19 +80,42 @@ export type FamilyTreeTheme = {
   text: string;
   mutedText: string;
   cardBackground: string;
-  bloodline: string;
-  spouse: string;
-  formerSpouse: string;
-  adopted: string;
-  step: string;
-  heir: string;
-  inheritance: string;
-  excluded: string;
   connector: string;
+};
+
+export type FamilyTreeLineStyle = "solid" | "dashed" | "dotted";
+
+export type FamilyTreeVisualRule = {
+  label: string;
+  color: string;
+  lineStyle: FamilyTreeLineStyle;
+  visible: boolean;
+  lockedVisible?: boolean;
+};
+
+export type FamilyTreeVisualConfig = {
+  relations: {
+    biological: FamilyTreeVisualRule;
+    spouse: FamilyTreeVisualRule;
+    formerSpouse: FamilyTreeVisualRule;
+    adopted: FamilyTreeVisualRule;
+    step: FamilyTreeVisualRule;
+  };
+  statuses: {
+    heir: FamilyTreeVisualRule;
+    inheritance: FamilyTreeVisualRule;
+    excluded: FamilyTreeVisualRule;
+    renounced: FamilyTreeVisualRule;
+    will: FamilyTreeVisualRule;
+  };
+  deceased: {
+    desaturate: number;
+  };
 };
 
 export type FamilyTreeRenderOptions = FamilyTreeParseOptions & {
   theme?: Partial<FamilyTreeTheme>;
+  visualConfig?: FamilyTreeVisualConfig;
   cardWidth?: number;
   cardHeight?: number;
   levelGap?: number;
@@ -108,16 +131,103 @@ export const DEFAULT_FAMILY_TREE_THEME: FamilyTreeTheme = {
   text: "#18181b",
   mutedText: "#71717a",
   cardBackground: "#ffffff",
-  bloodline: "#2563eb",
-  spouse: "#7c3aed",
-  formerSpouse: "#a1a1aa",
-  adopted: "#059669",
-  step: "#f97316",
-  heir: "#dc2626",
-  inheritance: "#ca8a04",
-  excluded: "#52525b",
   connector: "#94a3b8",
 };
+
+export const DEFAULT_FAMILY_TREE_VISUAL_CONFIG: FamilyTreeVisualConfig = {
+  relations: {
+    biological: {
+      label: "Biological child",
+      color: "#2563eb",
+      lineStyle: "solid",
+      visible: true,
+      lockedVisible: true,
+    },
+    spouse: {
+      label: "Marriage / spouse",
+      color: "#7c3aed",
+      lineStyle: "solid",
+      visible: true,
+      lockedVisible: true,
+    },
+    formerSpouse: {
+      label: "Divorced / former spouse",
+      color: "#a1a1aa",
+      lineStyle: "dashed",
+      visible: true,
+      lockedVisible: true,
+    },
+    adopted: {
+      label: "Adopted child",
+      color: "#059669",
+      lineStyle: "dashed",
+      visible: true,
+      lockedVisible: true,
+    },
+    step: {
+      label: "Step / external",
+      color: "#f97316",
+      lineStyle: "dotted",
+      visible: true,
+      lockedVisible: true,
+    },
+  },
+  statuses: {
+    heir: {
+      label: "Heir / successor [v]",
+      color: "#dc2626",
+      lineStyle: "solid",
+      visible: true,
+    },
+    inheritance: {
+      label: "Inheritance [m]",
+      color: "#ca8a04",
+      lineStyle: "solid",
+      visible: true,
+    },
+    excluded: {
+      label: "Excluded [x]",
+      color: "#52525b",
+      lineStyle: "solid",
+      visible: true,
+    },
+    renounced: {
+      label: "Renounced [red]",
+      color: "#52525b",
+      lineStyle: "solid",
+      visible: true,
+    },
+    will: {
+      label: "Will / testament [will]",
+      color: "#16a34a",
+      lineStyle: "solid",
+      visible: true,
+    },
+  },
+  deceased: {
+    desaturate: 50,
+  },
+};
+
+export function mergeFamilyTreeVisualConfig(
+  stored?: Partial<FamilyTreeVisualConfig>,
+): FamilyTreeVisualConfig {
+  if (!stored) return DEFAULT_FAMILY_TREE_VISUAL_CONFIG;
+  return {
+    relations: {
+      ...DEFAULT_FAMILY_TREE_VISUAL_CONFIG.relations,
+      ...(stored.relations || {}),
+    },
+    statuses: {
+      ...DEFAULT_FAMILY_TREE_VISUAL_CONFIG.statuses,
+      ...(stored.statuses || {}),
+    },
+    deceased: {
+      ...DEFAULT_FAMILY_TREE_VISUAL_CONFIG.deceased,
+      ...(stored.deceased || {}),
+    },
+  };
+}
 
 export const DEFAULT_FAMILY_TREE_EXAMPLE = `# Yılmaz Krallığı / Ailesi
 
@@ -187,12 +297,16 @@ type RenderContext = {
   personById: Map<string, FamilyTreePerson>;
   unionById: Map<string, FamilyTreeUnion>;
   options: Required<
-    Omit<FamilyTreeRenderOptions, "theme" | "title" | "indentSize">
+    Omit<
+      FamilyTreeRenderOptions,
+      "theme" | "visualConfig" | "title" | "indentSize"
+    >
   > & {
     title?: string;
     indentSize: number;
   };
   theme: FamilyTreeTheme;
+  visualConfig: FamilyTreeVisualConfig;
   parts: string[];
 };
 
@@ -405,6 +519,7 @@ export function renderFamilyTreeSvg(
 ): string {
   const document = "document" in input ? input.document : input;
   const theme = { ...DEFAULT_FAMILY_TREE_THEME, ...options.theme };
+  const visualConfig = mergeFamilyTreeVisualConfig(options.visualConfig);
   const context: RenderContext = {
     document,
     personById: new Map(document.persons.map((person) => [person.id, person])),
@@ -421,6 +536,7 @@ export function renderFamilyTreeSvg(
       indentSize: options.indentSize ?? 2,
     },
     theme,
+    visualConfig,
     parts: [],
   };
 
@@ -820,7 +936,7 @@ function renderPerson(
     cardX,
     y,
     context,
-    visualKind(layout.node.incomingRelationKind, person),
+    layout.node.incomingRelationKind,
   );
   if (!layout.unions.length) return bottom;
 
@@ -830,12 +946,10 @@ function renderPerson(
   const unionY = y + context.options.cardHeight + context.options.levelGap;
   for (const union of layout.unions) {
     const top = renderUnion(union, unionX, unionY, context, bottom);
-    drawConnector(
-      bottom,
-      top,
-      context,
-      unionConnectorKind(context.unionById.get(union.node.unionId)),
-    );
+    const unionData = context.unionById.get(union.node.unionId);
+    const relationType =
+      unionData?.kind === "former" ? "formerSpouse" : "spouse";
+    drawConnector(bottom, top, context, relationType);
     unionX += union.width + context.options.siblingGap;
   }
   return bottom;
@@ -849,7 +963,7 @@ function renderUnion(
   anchor?: Point,
 ): Point {
   const union = context.unionById.get(layout.node.unionId);
-  const connectorKind = unionConnectorKind(union);
+  const relationType = union?.kind === "former" ? "formerSpouse" : "spouse";
   let partnerX = x + layout.width / 2 - layout.partnerRowWidth / 2;
   const unionPoint = {
     x: x + layout.width / 2,
@@ -862,15 +976,16 @@ function renderUnion(
       partnerX,
       y,
       context,
-      union?.kind === "former" ? "former-spouse" : "spouse",
+      relationType,
     );
-    drawConnector(bottom, unionPoint, context, connectorKind);
+    drawConnector(bottom, unionPoint, context, relationType);
     partnerX += context.options.cardWidth + context.options.partnerGap;
   }
 
-  if (anchor) drawConnector(anchor, unionPoint, context, connectorKind);
+  if (anchor) drawConnector(anchor, unionPoint, context, relationType);
+  const relationRule = context.visualConfig.relations[relationType];
   context.parts.push(
-    `<circle cx="${round(unionPoint.x)}" cy="${round(unionPoint.y)}" r="5" fill="${attr(connectorColor(connectorKind, context))}"/>`,
+    `<circle cx="${round(unionPoint.x)}" cy="${round(unionPoint.y)}" r="5" fill="${attr(relationRule.color)}"/>`,
   );
 
   if (layout.children.length) {
@@ -885,10 +1000,10 @@ function renderUnion(
       unionPoint,
       { x: unionPoint.x, y: horizontalY },
       context,
-      connectorKind,
+      relationType,
     );
     context.parts.push(
-      `<path d="M ${round(firstCenter)} ${round(horizontalY)} H ${round(lastCenter)}" fill="none" stroke="${attr(connectorColor(connectorKind, context))}" stroke-width="2" stroke-linecap="round"${dash(connectorKind)}/>`,
+      `<path d="M ${round(firstCenter)} ${round(horizontalY)} H ${round(lastCenter)}" fill="none" stroke="${attr(relationRule.color)}" stroke-width="2" stroke-linecap="round"${dash(relationRule.lineStyle)}/>`,
     );
     for (const child of layout.children) {
       const childCenter = childX + child.width / 2;
@@ -899,7 +1014,7 @@ function renderUnion(
           y: y + layout.partnerRowHeight + context.options.levelGap,
         },
         context,
-        childConnectorKind(child.node.incomingRelationKind),
+        child.node.incomingRelationKind,
       );
       renderPerson(
         child,
@@ -919,25 +1034,19 @@ function renderCard(
   x: number,
   y: number,
   context: RenderContext,
-  kind:
-    | "bloodline"
-    | "spouse"
-    | "former-spouse"
-    | "adopted"
-    | "step"
-    | "heir"
-    | "excluded",
+  incomingRelation: keyof FamilyTreeVisualConfig["relations"],
 ): Point {
-  const stroke = cardColor(kind, context.theme);
-  const fill =
-    kind === "heir"
-      ? tint(context.theme.heir, 0.94)
-      : context.theme.cardBackground;
+  const visual = resolvePersonVisual(
+    person,
+    incomingRelation,
+    context.visualConfig,
+  );
+  const fill = context.theme.cardBackground;
   const displayName = person?.displayName ?? "Unknown";
   const dates = formatDates(person);
 
   context.parts.push(
-    `<rect x="${round(x)}" y="${round(y)}" width="${context.options.cardWidth}" height="${context.options.cardHeight}" rx="14" fill="${attr(fill)}" stroke="${attr(stroke)}" stroke-width="2"/>`,
+    `<rect x="${round(x)}" y="${round(y)}" width="${context.options.cardWidth}" height="${context.options.cardHeight}" rx="14" fill="${attr(fill)}" stroke="${attr(visual.borderColor)}" stroke-width="2"/>`,
     `<text x="${round(x + 14)}" y="${round(y + 20)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" fill="${attr(context.theme.text)}">${text(truncate(displayName, 24))}</text>`,
   );
 
@@ -963,6 +1072,42 @@ function renderCard(
   };
 }
 
+function resolvePersonVisual(
+  person: FamilyTreePerson | undefined,
+  incomingRelation: keyof FamilyTreeVisualConfig["relations"],
+  config: FamilyTreeVisualConfig,
+) {
+  const relationRule = config.relations[incomingRelation];
+  let highestStatusColor: string | undefined;
+
+  if (person?.tags) {
+    // Check status overrides in priority
+    if (person.tags.includes("v") && config.statuses.heir.visible)
+      highestStatusColor = config.statuses.heir.color;
+    else if (
+      person.tags.some((t) => t.startsWith("m")) &&
+      config.statuses.inheritance.visible
+    )
+      highestStatusColor = config.statuses.inheritance.color;
+    else if (person.tags.includes("x") && config.statuses.excluded.visible)
+      highestStatusColor = config.statuses.excluded.color;
+    else if (person.tags.includes("red") && config.statuses.renounced.visible)
+      highestStatusColor = config.statuses.renounced.color;
+    else if (person.tags.includes("will") && config.statuses.will.visible)
+      highestStatusColor = config.statuses.will.color;
+  }
+
+  const baseColor = highestStatusColor ?? relationRule.color;
+  const isDeceased = !!person?.deathDate;
+
+  return {
+    borderColor: isDeceased
+      ? desaturateHexColor(baseColor, config.deceased.desaturate)
+      : baseColor,
+    lineStyle: relationRule.lineStyle,
+  };
+}
+
 function renderTags(
   tags: string[],
   rightX: number,
@@ -974,8 +1119,17 @@ function renderTags(
     const label = `[${tag}]`;
     const width = Math.max(24, label.length * 7 + 10);
     cursorX -= width;
+    let color = context.theme.mutedText;
+    if (tag === "v") color = context.visualConfig.statuses.heir.color;
+    else if (tag.startsWith("m"))
+      color = context.visualConfig.statuses.inheritance.color;
+    else if (tag === "x") color = context.visualConfig.statuses.excluded.color;
+    else if (tag === "red")
+      color = context.visualConfig.statuses.renounced.color;
+    else if (tag === "will") color = context.visualConfig.statuses.will.color;
+
     context.parts.push(
-      `<rect x="${round(cursorX)}" y="${round(y)}" width="${round(width)}" height="18" rx="9" fill="${attr(tagColor(tag, context.theme))}"/>`,
+      `<rect x="${round(cursorX)}" y="${round(y)}" width="${round(width)}" height="18" rx="9" fill="${attr(color)}"/>`,
       `<text x="${round(cursorX + width / 2)}" y="${round(y + 12.5)}" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" fill="#ffffff">${text(label)}</text>`,
     );
     cursorX -= 4;
@@ -986,12 +1140,13 @@ function drawConnector(
   from: Point,
   to: Point,
   context: RenderContext,
-  kind: "normal" | "former" | "adopted" | "step",
+  relationType: keyof FamilyTreeVisualConfig["relations"],
 ): void {
+  const rule = context.visualConfig.relations[relationType];
   const midY = from.y + (to.y - from.y) / 2;
   const path = `M ${round(from.x)} ${round(from.y)} C ${round(from.x)} ${round(midY)}, ${round(to.x)} ${round(midY)}, ${round(to.x)} ${round(to.y)}`;
   context.parts.push(
-    `<path d="${path}" fill="none" stroke="${attr(connectorColor(kind, context))}" stroke-width="2" stroke-linecap="round"${dash(kind)}/>`,
+    `<path d="${path}" fill="none" stroke="${attr(rule.color)}" stroke-width="2" stroke-linecap="round"${dash(rule.lineStyle)}/>`,
   );
 }
 
@@ -1000,87 +1155,23 @@ function renderLegend(
   y: number,
   context: RenderContext,
 ): void {
-  const items: Array<[string, string]> = [
-    ["Asıl soy", context.theme.bloodline],
-    ["Eş", context.theme.spouse],
-    ["Eski eş", context.theme.formerSpouse],
-    ["Evlatlık", context.theme.adopted],
-    ["Üvey", context.theme.step],
-    ["Varis", context.theme.heir],
-  ];
-  let x = centerX - (items.length * 96) / 2;
+  const items: Array<[string, string]> = Object.values(
+    context.visualConfig.relations,
+  ).map((rule) => [rule.label, rule.color]);
+  let x = centerX - (items.length * 120) / 2;
   for (const [label, color] of items) {
     context.parts.push(
       `<circle cx="${round(x + 8)}" cy="${round(y)}" r="5" fill="${attr(color)}"/>`,
       `<text x="${round(x + 18)}" y="${round(y + 4)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="${attr(context.theme.mutedText)}">${text(label)}</text>`,
     );
-    x += 96;
+    x += 120;
   }
 }
 
-function visualKind(
-  kind: FamilyTreeRelationKind,
-  person?: FamilyTreePerson,
-): "bloodline" | "adopted" | "step" | "heir" | "excluded" {
-  if (person?.tags.includes("x") || person?.tags.includes("red"))
-    return "excluded";
-  if (person?.tags.includes("v")) return "heir";
-  if (kind === "adopted") return "adopted";
-  if (kind === "step") return "step";
-  return "bloodline";
-}
-
-function unionConnectorKind(union?: FamilyTreeUnion): "normal" | "former" {
-  return union?.kind === "former" ? "former" : "normal";
-}
-
-function childConnectorKind(
-  kind: FamilyTreeRelationKind,
-): "normal" | "adopted" | "step" {
-  if (kind === "adopted") return "adopted";
-  if (kind === "step") return "step";
-  return "normal";
-}
-
-function cardColor(
-  kind:
-    | "bloodline"
-    | "spouse"
-    | "former-spouse"
-    | "adopted"
-    | "step"
-    | "heir"
-    | "excluded",
-  theme: FamilyTreeTheme,
-): string {
-  if (kind === "spouse") return theme.spouse;
-  if (kind === "former-spouse") return theme.formerSpouse;
-  if (kind === "adopted") return theme.adopted;
-  if (kind === "step") return theme.step;
-  if (kind === "heir") return theme.heir;
-  if (kind === "excluded") return theme.excluded;
-  return theme.bloodline;
-}
-
-function connectorColor(
-  kind: "normal" | "former" | "adopted" | "step",
-  context: RenderContext,
-): string {
-  if (kind === "former") return context.theme.formerSpouse;
-  if (kind === "adopted") return context.theme.adopted;
-  if (kind === "step") return context.theme.step;
-  return context.theme.connector;
-}
-
-function tagColor(tag: string, theme: FamilyTreeTheme): string {
-  if (tag === "v") return theme.heir;
-  if (tag.startsWith("m")) return theme.inheritance;
-  if (tag === "x" || tag === "red") return theme.excluded;
-  return theme.mutedText;
-}
-
-function dash(kind: "normal" | "former" | "adopted" | "step"): string {
-  return kind === "normal" ? "" : ' stroke-dasharray="6 5"';
+function dash(lineStyle: FamilyTreeLineStyle): string {
+  if (lineStyle === "dashed") return ' stroke-dasharray="6 5"';
+  if (lineStyle === "dotted") return ' stroke-dasharray="2 4"';
+  return "";
 }
 
 function formatDates(person?: FamilyTreePerson): string | undefined {
@@ -1147,16 +1238,20 @@ function round(value: number): string {
   return Number(value.toFixed(2)).toString();
 }
 
-function tint(color: string, amount: number): string {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return color;
-  const red = Number.parseInt(color.slice(1, 3), 16);
-  const green = Number.parseInt(color.slice(3, 5), 16);
-  const blue = Number.parseInt(color.slice(5, 7), 16);
-  return `#${[red, green, blue]
-    .map((channel) =>
-      Math.round(channel + (255 - channel) * amount)
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("")}`;
+function desaturateHexColor(hex: string, amount: number): string {
+  if (amount <= 0) return hex;
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  const r = Number.parseInt(hex.slice(1, 3), 16);
+  const g = Number.parseInt(hex.slice(3, 5), 16);
+  const b = Number.parseInt(hex.slice(5, 7), 16);
+
+  // Calculate relative luminance
+  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const desaturateFactor = Math.min(100, Math.max(0, amount)) / 100;
+
+  const nr = Math.round(r + (l - r) * desaturateFactor);
+  const ng = Math.round(g + (l - g) * desaturateFactor);
+  const nb = Math.round(b + (l - b) * desaturateFactor);
+
+  return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
 }

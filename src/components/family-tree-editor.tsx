@@ -10,49 +10,29 @@ import {
 } from "@/components/ui/resizable";
 import {
   DEFAULT_FAMILY_TREE_EXAMPLE,
-  DEFAULT_FAMILY_TREE_THEME,
+  type FamilyTreeVisualConfig,
+  mergeFamilyTreeVisualConfig,
 } from "@/lib/familytree";
 import { FamilyTreeHeader } from "./family-tree-header";
 import { FamilyTreePreview } from "./family-tree-preview";
 
-const FAMILY_TREE_THEME_STORAGE_KEY = "familytree.theme.v1";
-
-export type FamilyTreeThemeConfig = {
-  bloodline: string;
-  spouse: string;
-  formerSpouse: string;
-  adopted: string;
-  step: string;
-  heir: string;
-  inheritance: string;
-  excluded: string;
-};
-
-const DEFAULT_THEME_CONFIG: FamilyTreeThemeConfig = {
-  bloodline: DEFAULT_FAMILY_TREE_THEME.bloodline,
-  spouse: DEFAULT_FAMILY_TREE_THEME.spouse,
-  formerSpouse: DEFAULT_FAMILY_TREE_THEME.formerSpouse,
-  adopted: DEFAULT_FAMILY_TREE_THEME.adopted,
-  step: DEFAULT_FAMILY_TREE_THEME.step,
-  heir: DEFAULT_FAMILY_TREE_THEME.heir,
-  inheritance: DEFAULT_FAMILY_TREE_THEME.inheritance,
-  excluded: DEFAULT_FAMILY_TREE_THEME.excluded,
-};
+const FAMILY_TREE_VISUAL_CONFIG_STORAGE_KEY = "familytree.visual-config.v1";
 
 export function FamilyTreeEditor() {
   const [source, setSource] = useState(DEFAULT_FAMILY_TREE_EXAMPLE);
-  const [theme, setTheme] =
-    useState<FamilyTreeThemeConfig>(DEFAULT_THEME_CONFIG);
+  const [visualConfig, setVisualConfig] = useState<FamilyTreeVisualConfig>(() =>
+    mergeFamilyTreeVisualConfig(),
+  );
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    const stored = localStorage.getItem(FAMILY_TREE_THEME_STORAGE_KEY);
+    const stored = localStorage.getItem(FAMILY_TREE_VISUAL_CONFIG_STORAGE_KEY);
     if (stored) {
       try {
-        setTheme(JSON.parse(stored));
+        setVisualConfig(mergeFamilyTreeVisualConfig(JSON.parse(stored)));
       } catch (e) {
-        console.error("Failed to parse stored theme", e);
+        console.error("Failed to parse stored visual config", e);
       }
     }
   }, []);
@@ -60,14 +40,14 @@ export function FamilyTreeEditor() {
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem(
-        FAMILY_TREE_THEME_STORAGE_KEY,
-        JSON.stringify(theme),
+        FAMILY_TREE_VISUAL_CONFIG_STORAGE_KEY,
+        JSON.stringify(visualConfig),
       );
     }
-  }, [theme, isMounted]);
+  }, [visualConfig, isMounted]);
 
-  const handleResetTheme = () => {
-    setTheme(DEFAULT_THEME_CONFIG);
+  const handleResetConfig = () => {
+    setVisualConfig(mergeFamilyTreeVisualConfig());
   };
 
   if (!isMounted) return null;
@@ -75,9 +55,9 @@ export function FamilyTreeEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden w-full">
       <FamilyTreeHeader
-        theme={theme}
-        setTheme={setTheme}
-        onResetTheme={handleResetTheme}
+        visualConfig={visualConfig}
+        setVisualConfig={setVisualConfig}
+        onResetConfig={handleResetConfig}
       />
 
       <div className="flex-1 overflow-hidden w-full">
@@ -105,7 +85,7 @@ export function FamilyTreeEditor() {
             minSize={35}
             className="flex flex-col bg-background relative"
           >
-            <FamilyTreePreview source={source} theme={theme} />
+            <FamilyTreePreview source={source} visualConfig={visualConfig} />
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

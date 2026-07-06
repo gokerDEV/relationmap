@@ -1,19 +1,19 @@
 "use client";
 
-import { Button, buttonVariants } from "@/components/ui/button";
-import type { FamilyTreeThemeConfig } from "./family-tree-editor";
+import { buttonVariants } from "@/components/ui/button";
+import type { FamilyTreeVisualConfig } from "@/lib/familytree";
 import { FamilyTreeHowToSheet } from "./family-tree-how-to-sheet";
 
 interface FamilyTreeHeaderProps {
-  theme: FamilyTreeThemeConfig;
-  setTheme: React.Dispatch<React.SetStateAction<FamilyTreeThemeConfig>>;
-  onResetTheme: () => void;
+  visualConfig: FamilyTreeVisualConfig;
+  setVisualConfig: React.Dispatch<React.SetStateAction<FamilyTreeVisualConfig>>;
+  onResetConfig: () => void;
 }
 
 export function FamilyTreeHeader({
-  theme,
-  setTheme,
-  onResetTheme,
+  visualConfig,
+  setVisualConfig,
+  onResetConfig,
 }: FamilyTreeHeaderProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b border-border bg-background px-4">
@@ -22,11 +22,16 @@ export function FamilyTreeHeader({
       </div>
       <div className="flex items-center gap-2">
         <FamilyTreeHowToSheet
-          theme={theme}
-          setTheme={setTheme}
-          onResetTheme={onResetTheme}
+          visualConfig={visualConfig}
+          setVisualConfig={setVisualConfig}
+          onResetConfig={onResetConfig}
         />
-        <a href="https://github.com/gokerm/familytree" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        <a
+          href="https://github.com/gokerm/familytree"
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "ghost", size: "sm" })}
+        >
           GitHub
         </a>
       </div>

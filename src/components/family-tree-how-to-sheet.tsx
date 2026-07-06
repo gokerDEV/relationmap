@@ -1,8 +1,16 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -12,29 +20,62 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { FamilyTreeThemeConfig } from "./family-tree-editor";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import type {
+  FamilyTreeLineStyle,
+  FamilyTreeVisualConfig,
+} from "@/lib/familytree";
 
 interface FamilyTreeHowToSheetProps {
-  theme: FamilyTreeThemeConfig;
-  setTheme: React.Dispatch<React.SetStateAction<FamilyTreeThemeConfig>>;
-  onResetTheme: () => void;
+  visualConfig: FamilyTreeVisualConfig;
+  setVisualConfig: React.Dispatch<React.SetStateAction<FamilyTreeVisualConfig>>;
+  onResetConfig: () => void;
 }
 
 export function FamilyTreeHowToSheet({
-  theme,
-  setTheme,
-  onResetTheme,
+  visualConfig,
+  setVisualConfig,
+  onResetConfig,
 }: FamilyTreeHowToSheetProps) {
-  const handleColorChange = (
-    key: keyof FamilyTreeThemeConfig,
-    value: string,
+  const updateRelation = (
+    key: keyof FamilyTreeVisualConfig["relations"],
+    updates: Partial<FamilyTreeVisualConfig["relations"][typeof key]>,
   ) => {
-    setTheme((prev) => ({ ...prev, [key]: value }));
+    setVisualConfig((prev) => ({
+      ...prev,
+      relations: {
+        ...prev.relations,
+        [key]: { ...prev.relations[key], ...updates },
+      },
+    }));
+  };
+
+  const updateStatus = (
+    key: keyof FamilyTreeVisualConfig["statuses"],
+    updates: Partial<FamilyTreeVisualConfig["statuses"][typeof key]>,
+  ) => {
+    setVisualConfig((prev) => ({
+      ...prev,
+      statuses: {
+        ...prev.statuses,
+        [key]: { ...prev.statuses[key], ...updates },
+      },
+    }));
+  };
+
+  const updateDeceased = (desaturate: number) => {
+    setVisualConfig((prev) => ({
+      ...prev,
+      deceased: { ...prev.deceased, desaturate },
+    }));
   };
 
   return (
     <Sheet>
-      <SheetTrigger className={buttonVariants({ variant: "outline", size: "sm" })}>
+      <SheetTrigger
+        className={buttonVariants({ variant: "outline", size: "sm" })}
+      >
         How to
       </SheetTrigger>
       <SheetContent
@@ -42,7 +83,7 @@ export function FamilyTreeHowToSheet({
         className="w-[400px] sm:w-[540px] flex flex-col gap-0 p-0"
       >
         <SheetHeader className="p-6 pb-2 text-left">
-          <SheetTitle>Documentation & Theme</SheetTitle>
+          <SheetTitle>Documentation & Config</SheetTitle>
           <SheetDescription className="sr-only">
             How to use and customize.
           </SheetDescription>
@@ -52,57 +93,155 @@ export function FamilyTreeHowToSheet({
             <div className="space-y-3">
               <h3 className="font-medium text-sm">Notation Guide</h3>
               <div className="text-sm font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre">
-                {`+     evlilik / eş
-x+    boşanmış eski eş
-a+    evlatlık bağı
-~     üvey / soy dışı bağlantı
-@id   aynı kişiyi tekrar bağlama
-"..." nickname
-(...) doğum / ölüm
-{...} info
-[...] statü / miras / varis`}
+                {`+      marriage / spouse
+x+     divorced / former spouse
+a+     adopted child relation
+~      step / external relation
+@id    explicit person id / same person reference
+"..."  nickname
+(...)  birth / death date
+{...}  plain text info
+[...]  status / inheritance / succession tag`}
               </div>
             </div>
 
             <Separator />
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-sm">Theme Colors</h3>
+                <h3 className="font-medium text-sm">Visual Configuration</h3>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onResetTheme}
+                  onClick={onResetConfig}
                   className="h-8"
                 >
-                  Reset colors
+                  Reset config
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(theme).map(([key, value]) => (
-                  <div key={key} className="flex flex-col gap-1.5">
-                    <Label htmlFor={key} className="text-xs capitalize">
-                      {key.replace(/([A-Z])/g, " $1").trim()}
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id={key}
-                        type="color"
-                        value={value}
-                        onChange={(e) =>
-                          handleColorChange(
-                            key as keyof FamilyTreeThemeConfig,
-                            e.target.value,
-                          )
-                        }
-                        className="h-8 w-12 rounded cursor-pointer p-0 border-0"
-                      />
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {value}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+
+              {/* Relationships */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Relationships
+                </h4>
+                <div className="grid gap-4">
+                  {(
+                    Object.keys(visualConfig.relations) as Array<
+                      keyof typeof visualConfig.relations
+                    >
+                  ).map((key) => {
+                    const rule = visualConfig.relations[key];
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <Label className="text-sm w-36 truncate">
+                          {rule.label}
+                        </Label>
+                        <div className="flex items-center gap-2 flex-1 justify-end">
+                          <input
+                            type="color"
+                            value={rule.color}
+                            onChange={(e) =>
+                              updateRelation(key, { color: e.target.value })
+                            }
+                            className="h-8 w-8 rounded cursor-pointer p-0 border-0"
+                          />
+                          <Select
+                            value={rule.lineStyle}
+                            onValueChange={(val) => {
+                              if (val) updateRelation(key, { lineStyle: val as FamilyTreeLineStyle });
+                            }}
+                          >
+                            <SelectTrigger className="w-24 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="solid">Solid</SelectItem>
+                              <SelectItem value="dashed">Dashed</SelectItem>
+                              <SelectItem value="dotted">Dotted</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="flex items-center gap-1.5 w-16 justify-end text-muted-foreground">
+                            <Lock className="w-3.5 h-3.5" />
+                            <span className="text-xs">Locked</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Statuses */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Statuses
+                </h4>
+                <div className="grid gap-4">
+                  {(
+                    Object.keys(visualConfig.statuses) as Array<
+                      keyof typeof visualConfig.statuses
+                    >
+                  ).map((key) => {
+                    const rule = visualConfig.statuses[key];
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <Label className="text-sm w-36 truncate">
+                          {rule.label}
+                        </Label>
+                        <div className="flex items-center gap-2 flex-1 justify-end">
+                          <input
+                            type="color"
+                            value={rule.color}
+                            onChange={(e) =>
+                              updateStatus(key, { color: e.target.value })
+                            }
+                            className="h-8 w-8 rounded cursor-pointer p-0 border-0"
+                          />
+                          {/* Invisible placeholder to align with select box */}
+                          <div className="w-24 h-8" />
+                          <div className="flex items-center gap-2 w-16 justify-end">
+                            <Switch
+                              checked={rule.visible}
+                              onCheckedChange={(val) =>
+                                updateStatus(key, { visible: val })
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Deceased */}
+              <div className="space-y-4 pb-8">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Deceased Desaturation
+                </h4>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[visualConfig.deceased.desaturate]}
+                    onValueChange={(vals) => {
+                      const v = Array.isArray(vals) ? vals[0] : vals;
+                      if (typeof v === "number") updateDeceased(v);
+                    }}
+                    className="flex-1"
+                  />
+                  <span className="text-sm font-mono text-muted-foreground w-8 text-right">
+                    {visualConfig.deceased.desaturate}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
