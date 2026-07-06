@@ -23,6 +23,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import type {
+  FamilyTreeConnectorShape,
   FamilyTreeLineStyle,
   FamilyTreeVisualConfig,
 } from "@/lib/familytree";
@@ -38,9 +39,9 @@ export function FamilyTreeHowToSheet({
   setVisualConfig,
   onResetConfig,
 }: FamilyTreeHowToSheetProps) {
-  const updateRelation = (
-    key: keyof FamilyTreeVisualConfig["relations"],
-    updates: Partial<FamilyTreeVisualConfig["relations"][typeof key]>,
+  const updateRelation = <K extends keyof FamilyTreeVisualConfig["relations"]>(
+    key: K,
+    updates: Partial<FamilyTreeVisualConfig["relations"][K]>,
   ) => {
     setVisualConfig((prev) => ({
       ...prev,
@@ -51,9 +52,9 @@ export function FamilyTreeHowToSheet({
     }));
   };
 
-  const updateStatus = (
-    key: keyof FamilyTreeVisualConfig["statuses"],
-    updates: Partial<FamilyTreeVisualConfig["statuses"][typeof key]>,
+  const updateStatus = <K extends keyof FamilyTreeVisualConfig["statuses"]>(
+    key: K,
+    updates: Partial<FamilyTreeVisualConfig["statuses"][K]>,
   ) => {
     setVisualConfig((prev) => ({
       ...prev,
@@ -68,6 +69,13 @@ export function FamilyTreeHowToSheet({
     setVisualConfig((prev) => ({
       ...prev,
       deceased: { ...prev.deceased, desaturate },
+    }));
+  };
+
+  const updateConnectorShape = (shape: FamilyTreeConnectorShape) => {
+    setVisualConfig((prev) => ({
+      ...prev,
+      connectors: { ...prev.connectors, shape },
     }));
   };
 
@@ -120,7 +128,6 @@ a+     adopted child relation
                 </Button>
               </div>
 
-              {/* Relationships */}
               <div className="space-y-4">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Relationships
@@ -152,7 +159,11 @@ a+     adopted child relation
                           <Select
                             value={rule.lineStyle}
                             onValueChange={(val) => {
-                              if (val) updateRelation(key, { lineStyle: val as FamilyTreeLineStyle });
+                              if (val) {
+                                updateRelation(key, {
+                                  lineStyle: val as FamilyTreeLineStyle,
+                                });
+                              }
                             }}
                           >
                             <SelectTrigger className="w-24 h-8">
@@ -175,7 +186,29 @@ a+     adopted child relation
                 </div>
               </div>
 
-              {/* Statuses */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Tree connectors
+                </h4>
+                <div className="flex items-center justify-between gap-4">
+                  <Label className="text-sm w-36 truncate">Shape</Label>
+                  <Select
+                    value={visualConfig.connectors.shape}
+                    onValueChange={(val) => {
+                      if (val) updateConnectorShape(val as FamilyTreeConnectorShape);
+                    }}
+                  >
+                    <SelectTrigger className="w-40 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="curved">Curved</SelectItem>
+                      <SelectItem value="elbow">Elbow</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Statuses
@@ -204,7 +237,6 @@ a+     adopted child relation
                             }
                             className="h-8 w-8 rounded cursor-pointer p-0 border-0"
                           />
-                          {/* Invisible placeholder to align with select box */}
                           <div className="w-24 h-8" />
                           <div className="flex items-center gap-2 w-16 justify-end">
                             <Switch
@@ -221,7 +253,6 @@ a+     adopted child relation
                 </div>
               </div>
 
-              {/* Deceased */}
               <div className="space-y-4 pb-8">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Deceased Desaturation
