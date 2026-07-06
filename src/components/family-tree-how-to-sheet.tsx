@@ -195,7 +195,8 @@ a+     adopted child relation
                   <Select
                     value={visualConfig.connectors.shape}
                     onValueChange={(val) => {
-                      if (val) updateConnectorShape(val as FamilyTreeConnectorShape);
+                      if (val)
+                        updateConnectorShape(val as FamilyTreeConnectorShape);
                     }}
                   >
                     <SelectTrigger className="w-40 h-8">

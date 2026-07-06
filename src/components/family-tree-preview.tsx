@@ -119,7 +119,7 @@ export function FamilyTreePreview({
       )}
 
       <ContextMenu>
-        <ContextMenuTrigger 
+        <ContextMenuTrigger
           ref={containerRef}
           className="flex-1 overflow-hidden bg-background relative cursor-grab active:cursor-grabbing"
           onWheel={handleWheel}

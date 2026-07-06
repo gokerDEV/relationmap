@@ -330,8 +330,10 @@ type LayoutPerson = Size & {
   kind: "person";
   node: FamilyTreePersonNode;
   unions: LayoutUnion[];
-  anchorOffset: number;
-  unionsWidth: number;
+  anchorCardXOffset: number;
+  anchorCenterOffset: number;
+  spouseRowWidth: number;
+  subtreeWidth: number;
   hasPartnerUnions: boolean;
 };
 
@@ -342,6 +344,7 @@ type LayoutUnion = Size & {
   children: LayoutPerson[];
   partnerRowWidth: number;
   childrenWidth: number;
+  subtreeWidth: number;
 };
 
 type RenderContext = {
@@ -632,8 +635,8 @@ export function renderFamilyTreeSvg(
   const rootY = context.options.padding + titleHeight;
   for (const root of roots) {
     if (root.kind === "person") renderPerson(root, cursorX, rootY, context);
-    else renderUnion(root, cursorX, rootY, context);
-    cursorX += root.width + context.options.siblingGap;
+    else renderUnion(root, cursorX, cursorX, rootY, context);
+    cursorX += root.subtreeWidth + context.options.siblingGap;
   }
 
   if (context.options.showLegend) {
@@ -705,7 +708,13 @@ function parsePerson(
   let value = raw.trim();
   if (!value) {
     issues.push(
-      issue(line, column, "error", "empty-person", "Person definition cannot be empty."),
+      issue(
+        line,
+        column,
+        "error",
+        "empty-person",
+        "Person definition cannot be empty.",
+      ),
     );
     return undefined;
   }
@@ -930,23 +939,35 @@ function layoutPerson(
       unions,
       width: context.options.cardWidth,
       height: context.options.cardHeight,
-      anchorOffset: 0,
-      unionsWidth: 0,
+      anchorCardXOffset: 0,
+      anchorCenterOffset: context.options.cardWidth / 2,
+      spouseRowWidth: context.options.cardWidth,
+      subtreeWidth: context.options.cardWidth,
       hasPartnerUnions: false,
     };
   }
 
-  const unionsWidth = sumWidths(unions, context.options.siblingGap);
   const hasPartnerUnions = unions.some(
     (union) => union.visiblePartnerIds.length > 0,
   );
-  const rowWidth = hasPartnerUnions
-    ? context.options.cardWidth + context.options.partnerGap + unionsWidth
-    : unionsWidth;
-  const width = Math.max(context.options.cardWidth, rowWidth);
-  const anchorOffset = hasPartnerUnions
-    ? 0
-    : Math.max(0, (width - context.options.cardWidth) / 2);
+
+  const unionsPartnerRowWidth = sumWidths(
+    unions.map((u) => ({ width: u.partnerRowWidth, height: 0 })),
+    context.options.partnerGap,
+  );
+
+  const spouseRowWidth = hasPartnerUnions
+    ? context.options.cardWidth +
+      context.options.partnerGap +
+      unionsPartnerRowWidth
+    : context.options.cardWidth;
+
+  const unionsSubtreeWidth = sumWidths(
+    unions.map((u) => ({ width: u.subtreeWidth, height: 0 })),
+    context.options.siblingGap,
+  );
+
+  const subtreeWidth = Math.max(spouseRowWidth, unionsSubtreeWidth);
   const unionHeight = unions.reduce(
     (max, union) => Math.max(max, union.height),
     0,
@@ -956,10 +977,12 @@ function layoutPerson(
     kind: "person",
     node,
     unions,
-    width,
+    width: subtreeWidth,
     height: Math.max(context.options.cardHeight, unionHeight),
-    anchorOffset,
-    unionsWidth,
+    anchorCardXOffset: 0,
+    anchorCenterOffset: context.options.cardWidth / 2,
+    spouseRowWidth,
+    subtreeWidth,
     hasPartnerUnions,
   };
 }
@@ -977,11 +1000,16 @@ function layoutUnion(
       (visiblePartnerIds.length - 1) * context.options.partnerGap
     : 0;
   const children = node.children.map((child) => layoutPerson(child, context));
-  const childrenWidth = sumWidths(children, context.options.siblingGap);
+  const childrenWidth = sumWidths(
+    children.map((c) => ({ width: c.subtreeWidth, height: 0 })),
+    context.options.siblingGap,
+  );
   const childrenHeight = children.reduce(
     (max, child) => Math.max(max, child.height),
     0,
   );
+  const subtreeWidth = Math.max(partnerRowWidth, childrenWidth);
+
   return {
     kind: "union",
     node,
@@ -989,7 +1017,8 @@ function layoutUnion(
     children,
     partnerRowWidth,
     childrenWidth,
-    width: Math.max(partnerRowWidth, childrenWidth, context.options.cardWidth),
+    subtreeWidth,
+    width: subtreeWidth,
     height:
       context.options.cardHeight +
       (children.length ? context.options.levelGap + childrenHeight : 0),
@@ -1002,7 +1031,7 @@ function renderPerson(
   y: number,
   context: RenderContext,
 ): Point {
-  const cardX = x + layout.anchorOffset;
+  const cardX = x + layout.anchorCardXOffset;
   const person = context.personById.get(layout.node.personId);
   const anchorBottom = renderCard(
     person,
@@ -1013,20 +1042,30 @@ function renderPerson(
   );
   if (!layout.unions.length) return anchorBottom;
 
-  let unionX = layout.hasPartnerUnions
+  let currentPartnerX = layout.hasPartnerUnions
     ? cardX + context.options.cardWidth + context.options.partnerGap
-    : x + (layout.width - layout.unionsWidth) / 2;
+    : x;
+  let currentChildX = x;
 
   for (const union of layout.unions) {
-    renderUnion(union, unionX, y, context, anchorBottom);
-    unionX += union.width + context.options.siblingGap;
+    renderUnion(
+      union,
+      currentPartnerX,
+      currentChildX,
+      y,
+      context,
+      anchorBottom,
+    );
+    currentPartnerX += union.partnerRowWidth + context.options.partnerGap;
+    currentChildX += union.subtreeWidth + context.options.siblingGap;
   }
   return anchorBottom;
 }
 
 function renderUnion(
   layout: LayoutUnion,
-  x: number,
+  partnerX: number,
+  childStartX: number,
   y: number,
   context: RenderContext,
   anchor?: Point,
@@ -1034,27 +1073,27 @@ function renderUnion(
   const union = context.unionById.get(layout.node.unionId);
   const relationType = union?.kind === "former" ? "formerSpouse" : "spouse";
   const relationRule = context.visualConfig.relations[relationType];
-  const partnerStartX = x + (layout.width - layout.partnerRowWidth) / 2;
-  let partnerX = partnerStartX;
+  let px = partnerX;
   const partnerBottoms: Point[] = [];
 
   for (const partnerId of layout.visiblePartnerIds) {
     const bottom = renderCard(
       context.personById.get(partnerId),
-      partnerX,
+      px,
       y,
       context,
       relationType,
     );
     partnerBottoms.push(bottom);
-    partnerX += context.options.cardWidth + context.options.partnerGap;
+    px += context.options.cardWidth + context.options.partnerGap;
   }
 
   const partnerCenter = partnerBottoms.length
     ? average(partnerBottoms.map((point) => point.x))
-    : x + layout.width / 2;
+    : partnerX + layout.partnerRowWidth / 2;
+
   const unionPoint = {
-    x: anchor ? partnerCenter : x + layout.width / 2,
+    x: anchor ? partnerCenter : partnerX + layout.partnerRowWidth / 2,
     y: y + context.options.cardHeight + 26,
   };
 
@@ -1070,33 +1109,56 @@ function renderUnion(
   if (layout.children.length) {
     const horizontalY = unionPoint.y + 22;
     const childY = y + context.options.cardHeight + context.options.levelGap;
-    let childX = x + (layout.width - layout.childrenWidth) / 2;
-    const firstCenter = childX + layout.children[0].width / 2;
-    const lastCenter =
-      childX +
-      layout.childrenWidth -
-      layout.children[layout.children.length - 1].width / 2;
+    let cx =
+      childStartX +
+      Math.max(0, (layout.subtreeWidth - layout.childrenWidth) / 2);
 
-    drawConnector(
-      unionPoint,
-      { x: unionPoint.x, y: horizontalY },
-      context,
-      relationType,
-    );
-    context.parts.push(
-      `<path d="M ${round(firstCenter)} ${round(horizontalY)} H ${round(lastCenter)}" fill="none" stroke="${attr(relationRule.color)}" stroke-width="2" stroke-linecap="round"${dash(relationRule.lineStyle)}/>`,
-    );
+    const isCurved = context.visualConfig.connectors.shape === "curved";
 
-    for (const child of layout.children) {
-      const childCenter = childX + child.width / 2;
+    if (isCurved) {
+      for (const child of layout.children) {
+        const childAnchorCenter = cx + child.anchorCenterOffset;
+        drawConnector(
+          unionPoint,
+          { x: childAnchorCenter, y: childY },
+          context,
+          child.node.incomingRelationKind,
+        );
+        renderPerson(child, cx, childY, context);
+        cx += child.subtreeWidth + context.options.siblingGap;
+      }
+    } else {
+      const firstChildCenter = cx + layout.children[0].anchorCenterOffset;
+      const lastChildCenter =
+        cx +
+        layout.childrenWidth -
+        layout.children[layout.children.length - 1].subtreeWidth +
+        layout.children[layout.children.length - 1].anchorCenterOffset;
+
       drawConnector(
-        { x: childCenter, y: horizontalY },
-        { x: childCenter, y: childY },
+        unionPoint,
+        { x: unionPoint.x, y: horizontalY },
         context,
-        child.node.incomingRelationKind,
+        relationType,
       );
-      renderPerson(child, childX, childY, context);
-      childX += child.width + context.options.siblingGap;
+
+      if (layout.children.length > 1) {
+        context.parts.push(
+          `<path d="M ${round(firstChildCenter)} ${round(horizontalY)} H ${round(lastChildCenter)}" fill="none" stroke="${attr(relationRule.color)}" stroke-width="2" stroke-linecap="round"${dash(relationRule.lineStyle)}/>`,
+        );
+      }
+
+      for (const child of layout.children) {
+        const childAnchorCenter = cx + child.anchorCenterOffset;
+        drawConnector(
+          { x: childAnchorCenter, y: horizontalY },
+          { x: childAnchorCenter, y: childY },
+          context,
+          child.node.incomingRelationKind,
+        );
+        renderPerson(child, cx, childY, context);
+        cx += child.subtreeWidth + context.options.siblingGap;
+      }
     }
   }
 
