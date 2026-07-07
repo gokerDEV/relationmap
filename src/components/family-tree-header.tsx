@@ -1,5 +1,7 @@
 "use client";
 
+import { Dialog } from "@base-ui/react/dialog";
+import { useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Select,
@@ -8,8 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog } from "@base-ui/react/dialog";
-import { useState } from "react";
 import type { FamilyTreeVisualConfig } from "@/lib/familytree";
 import { FamilyTreeHowToSheet } from "./family-tree-how-to-sheet";
 
@@ -35,7 +35,7 @@ export function FamilyTreeHeader({
 
   const handleSampleChange = (val: string | null) => {
     if (!val || val === activeSample) return;
-    
+
     if (isDirty) {
       setPendingSample(val);
       setConfirmOpen(true);
@@ -88,9 +88,12 @@ export function FamilyTreeHeader({
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/80 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
           <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 grid w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg sm:rounded-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
             <div className="flex flex-col space-y-2 text-center sm:text-left">
-              <Dialog.Title className="text-lg font-semibold font-heading text-foreground">Change Example?</Dialog.Title>
+              <Dialog.Title className="text-lg font-semibold font-heading text-foreground">
+                Change Example?
+              </Dialog.Title>
               <Dialog.Description className="text-sm text-muted-foreground">
-                Changing the example will reset the editor. Any modifications you made to this sample will be lost. Do you want to continue?
+                Changing the example will reset the editor. Any modifications
+                you made to this sample will be lost. Do you want to continue?
               </Dialog.Description>
             </div>
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-4">

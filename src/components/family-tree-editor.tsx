@@ -20,7 +20,9 @@ const FAMILY_TREE_VISUAL_CONFIG_STORAGE_KEY = "familytree.visual-config.v1";
 
 export function FamilyTreeEditor() {
   const [source, setSource] = useState(DEFAULT_FAMILY_TREE_EXAMPLE);
-  const [originalSource, setOriginalSource] = useState(DEFAULT_FAMILY_TREE_EXAMPLE);
+  const [originalSource, setOriginalSource] = useState(
+    DEFAULT_FAMILY_TREE_EXAMPLE,
+  );
   const [activeSample, setActiveSample] = useState("custom");
   const [visualConfig, setVisualConfig] = useState<FamilyTreeVisualConfig>(() =>
     mergeFamilyTreeVisualConfig(),
@@ -40,12 +42,14 @@ export function FamilyTreeEditor() {
       }
     }
 
-    const storedSample = localStorage.getItem("familytree.activeSample") || "custom";
+    const storedSample =
+      localStorage.getItem("familytree.activeSample") || "custom";
     setActiveSample(storedSample);
-    
-    const storedSource = localStorage.getItem("familytree.source") || 
-                         localStorage.getItem("familytree.custom.source") || 
-                         DEFAULT_FAMILY_TREE_EXAMPLE;
+
+    const storedSource =
+      localStorage.getItem("familytree.source") ||
+      localStorage.getItem("familytree.custom.source") ||
+      DEFAULT_FAMILY_TREE_EXAMPLE;
     setSource(storedSource);
 
     if (storedSample !== "custom") {
