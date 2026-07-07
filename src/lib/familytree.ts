@@ -875,6 +875,30 @@ function createUnion(
   return { kind: "union", unionId: union.id, line, children: [] };
 }
 
+function createImplicitUnion(
+  document: MutableDocument,
+  parentId: string,
+  childId: string,
+  line: number,
+): FamilyTreeUnionNode {
+  const union: FamilyTreeUnion = {
+    id: `implicit-${parentId}-${childId}-${line}`,
+    kind: "current",
+    partnerIds: [parentId],
+    line,
+    anchorPersonId: parentId,
+  };
+
+  document.unions.push(union);
+
+  return {
+    kind: "union",
+    unionId: union.id,
+    line,
+    children: [],
+  };
+}
+
 function attachPerson(
   document: MutableDocument,
   parent: StackEntry | undefined,
@@ -897,12 +921,13 @@ function attachPerson(
     });
     return;
   }
-  const unionNode: FamilyTreeUnionNode = {
-    kind: "union",
-    unionId: `implicit-${parent.node.personId}-${personNode.personId}-${line}`,
+  const unionNode = createImplicitUnion(
+    document,
+    parent.node.personId,
+    personNode.personId,
     line,
-    children: [personNode],
-  };
+  );
+  unionNode.children.push(personNode);
   parent.node.unions.push(unionNode);
   document.childRelations.push({
     id: `c${document.childRelations.length + 1}`,
