@@ -1,9 +1,9 @@
-import { FamilyTreeEditor } from "@/components/family-tree-editor";
+import { RelationMapEditor } from "@/components/relation-map-editor";
 
 export default function Home() {
   return (
     <main className="h-screen w-full flex flex-col overflow-hidden bg-background">
-      <FamilyTreeEditor />
+      <RelationMapEditor />
     </main>
   );
 }
