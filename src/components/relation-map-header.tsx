@@ -27,7 +27,7 @@ export function RelationMapHeader({
     <header className="flex h-14 items-center justify-between border-b border-border bg-background px-4">
       <div className="flex items-center gap-4">
         <span className="font-semibold text-foreground">relationmap</span>
-        <Select value={activeSample} onValueChange={onSelectSample}>
+        <Select value={activeSample} onValueChange={(val) => onSelectSample(val ?? "")}>
           <SelectTrigger className="w-[220px] h-8 text-xs">
             <SelectValue placeholder="Load a sample..." />
           </SelectTrigger>
