@@ -1,0 +1,36 @@
+---
+map: network
+country: Fictional
+period: 1970-1985
+---
+
+# Union / Board / Media Map
+
+- Nermin Aksoy @nermin_aksoy [unionist]
+  - > i:istanbul_law "İstanbul Law Faculty" [student] (1967-1971)
+    - > g:north_workers_union "North Workers Union" [founder] (1972)
+      - !> e:steel_strike_1974 "Steel Strike" [organizer] (1974)
+        - > d:collective_agreement_1975 "Collective Agreement" [source] (1975)
+  - ~> @leyla_turan [media-contact]
+
+- Orhan Tunc @orhan_tunc [industrialist]
+  - > g:tunc_steel "Tunc Steel" [owner] (1968-1985)
+    - > g:industrial_board "Industrial Board" [chair] (1976-1982)
+      - > p:north_basin "North Basin" [region]
+  - x> g:north_workers_union [conflict] (1974)
+
+- Leyla Turan @leyla_turan [journalist]
+  - > m:city_gazette "City Gazette" [reporter] (1971-1978)
+    - > e:steel_strike_1974 [covered]
+      - > d:collective_agreement_1975 [published]
+  - ~> @nermin_aksoy [source]
+
+- North Workers Union g:north_workers_union [union]
+  - > p:north_basin [base]
+  - > e:steel_strike_1974 [led]
+  - x> g:tunc_steel [labor-conflict]
+
+- Industrial Board g:industrial_board [board]
+  - > @orhan_tunc [chair]
+  - > g:tunc_steel [member-company]
+  - ?> p:north_basin [regional-influence]
