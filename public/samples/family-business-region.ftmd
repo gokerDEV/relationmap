@@ -1,0 +1,38 @@
+---
+map: network
+country: Fictional
+period: 1980-2020
+---
+
+# Family / Business / Region Map
+
+- Demir Family f:demir_family [family]
+  - > @mehmet_demir "Mehmet Demir" [patriarch]
+    - > g:demir_holding "Demir Holding" [founder] (1988)
+      - > s:logistics "Logistics" [sector]
+      - > p:marmara_ports "Marmara Ports" [region]
+  - > @aylin_demir "Aylin Demir" [member]
+  - > @cem_demir "Cem Demir" [member]
+
+- Aylin Demir @aylin_demir [executive]
+  - > i:boun "Boğaziçi University" [student] (1998-2002)
+    - > g:demir_holding [board] (2008-2020)
+      - > p:marmara_ports [region]
+      - > g:port_services_as "Port Services A.Ş." [subsidiary]
+  - ~> @kaan_yildiz [classmate]
+
+- Cem Demir @cem_demir [lawyer]
+  - > i:istanbul_law "İstanbul Law Faculty" [student] (1996-2000)
+    - > g:demir_holding [legal-director] (2005-2018)
+      - > d:port_tender_file "Port Tender File" [document] (2012)
+
+- Kaan Yildiz @kaan_yildiz [business]
+  - > i:boun [student] (1998-2002)
+    - > g:yildiz_maritime "Yıldız Maritime" [founder] (2006)
+      - > p:marmara_ports [region]
+      - ?> g:port_services_as [coordination-claim] (2014)
+
+- Trade Chamber g:trade_chamber [institutional-group]
+  - > @mehmet_demir [board] (1990-1998)
+  - > @kaan_yildiz [board] (2010-2016)
+  - > p:marmara_ports [regional-interest]
