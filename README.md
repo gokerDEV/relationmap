@@ -23,14 +23,14 @@ The map should explain relationships through real shared nodes, not artificial c
 Instead of writing a vague `Academic Circle` cluster, write the actual institution:
 
 ```markdown
-- Mina Urgan @mina
-  - > i:istanbul_uni "İstanbul Üniversitesi" [academic]
+- Aylin Soyer @aylin_soyer
+  - > i:ankara_sbf "Ankara SBF" [student]
 
-- Behice Boran @behice
-  - > i:dtcf "Ankara Üniversitesi DTCF" [academic]
+- Bora Erim @bora_erim
+  - > i:ankara_sbf [schoolmate]
 ```
 
-If two subjects share a university, party, company, union, publication, city, or event, they should point to the same node id. The renderer merges repeated ids.
+If two subjects share a university, party, company, union, publication, city, region, or event, they should point to the same node id. The renderer merges repeated ids.
 
 ## Node ids
 
@@ -49,10 +49,10 @@ d:id  document / source
 Examples:
 
 ```markdown
-- Behice Boran @behice [academic] [marxist]
-- Demir Ailesi f:demir [family]
-- Türkiye İşçi Partisi g:tip [party]
-- Ankara Üniversitesi DTCF i:dtcf [institution]
+- Aylin Soyer @aylin_soyer [academic]
+- Demir Family f:demir_family [family]
+- Reform Party g:reform_party [party]
+- Ankara SBF i:ankara_sbf [institution]
 ```
 
 ## Relation operators
@@ -68,11 +68,11 @@ x>   ended / split / left / disproved
 Examples:
 
 ```markdown
-- Ali Demir @ali
-  - > i:boun "Boğaziçi Üniversitesi" [student]
+- Ali Demir @ali_demir
+  - > i:boun "Boğaziçi University" [student]
     - > g:demir_holding "Demir Holding" [founder]
-      - > p:mersin "Mersin" [region]
-  - ~> @ayse "Ayşe Kara" [schoolmate]
+      - > p:marmara_ports "Marmara Ports" [region]
+  - ~> @ayse_kara "Ayşe Kara" [schoolmate]
   - x> g:old_party "Old Party" [left]
   - ?> d:report_12 "Report 12" [mentioned]
 ```
@@ -89,37 +89,38 @@ Examples:
 A node only needs its full display label once:
 
 ```markdown
-- Behice Boran @behice
-  - > i:dtcf "Ankara Üniversitesi DTCF" [academic]
+- Aylin Soyer @aylin_soyer
+  - > i:ankara_sbf "Ankara SBF" [student]
 
-- Mina Urgan @mina
-  - > i:dtcf [circle]
+- Bora Erim @bora_erim
+  - > i:ankara_sbf [schoolmate]
 ```
 
-Both paths point to the same `i:dtcf` node.
+Both paths point to the same `i:ankara_sbf` node.
 
 ## Chronology through nesting
 
 Nested rows mean continuation of that subject's path:
 
 ```markdown
-- Behice Boran @behice
-  - > i:dtcf "Ankara Üniversitesi DTCF" [academic]
-    - > g:tip "Türkiye İşçi Partisi" [chair] (1970-1971)
+- Aylin Soyer @aylin_soyer
+  - > i:ankara_sbf "Ankara SBF" [student]
+    - > m:forum_journal "Forum Journal" [published-in]
+      - > g:reform_party "Reform Party" [founder]
 ```
 
 This reads as:
 
 ```text
-Behice Boran -> Ankara Üniversitesi DTCF -> Türkiye İşçi Partisi
+Aylin Soyer -> Ankara SBF -> Forum Journal -> Reform Party
 ```
 
 Sibling rows are parallel relations without a stated sequence:
 
 ```markdown
-- Behice Boran @behice
-  - > i:dtcf "Ankara Üniversitesi DTCF" [academic]
-  - > g:tkp "Türkiye Komünist Partisi" [member]
+- Aylin Soyer @aylin_soyer
+  - > i:ankara_sbf "Ankara SBF" [student]
+  - > g:reform_party "Reform Party" [founder]
 ```
 
 ## Render rules
@@ -130,40 +131,17 @@ Sibling rows are parallel relations without a stated sequence:
 - This keeps a person's route visually traceable across institutions, groups, places, events, companies, and other people.
 - Shared nodes make school friendships, organizational continuity, family ties, institutional careers, monopolies, cartels, unions, party movements, and regional power relations readable without fake clusters.
 
-## Example
+## Built-in samples
 
-```markdown
----
-map: network
-country: Türkiye
-period: 1940-1975
----
+The app includes three compact relationmap samples under `public/samples`:
 
-# Turkish Left Network
-
-- Behice Boran @behice [academic] [marxist]
-  - > i:dtcf "Ankara Üniversitesi DTCF" [academic]
-    - > g:tip "Türkiye İşçi Partisi" [chair] (1970-1971)
-  - > g:tkp "Türkiye Komünist Partisi" [member]
-  - ~> @sadun "Sadun Aren" [ally]
-  - ~> @mina "Mina Urgan" [friend]
-
-- Mina Urgan @mina [writer] [socialist]
-  - > i:istanbul_uni "İstanbul Üniversitesi" [academic]
-  - > i:dtcf [circle]
-    - > g:tip [founder]
-  - ~> @behice [friend]
-
-- Sadun Aren @sadun [economist]
-  - > i:sbf "Ankara Üniversitesi SBF" [academic]
-    - > g:tip [founder]
-  - ~> @behice [ally]
-
-- Mehmet Ali Aybar @aybar [lawyer]
-  - > g:tip [chair] (1962-1969)
-  - x> @behice [split]
-  - x> @sadun [split]
+```text
+academic-political-network.ftmd  school -> publication -> party / union paths
+family-business-region.ftmd      family -> company -> sector / region / board paths
+union-board-network.ftmd         union -> board -> media / event / document paths
 ```
+
+They are intentionally fictional. They show structure and notation without turning sample data into claims about real people.
 
 ## Development
 

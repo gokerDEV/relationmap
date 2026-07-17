@@ -1,0 +1,31 @@
+---
+map: network
+country: Fictional
+period: 1960-1972
+---
+
+# Academic / Political Path Map
+
+- Aylin Soyer @aylin_soyer [academic] [writer]
+  - > i:ankara_sbf "Ankara SBF" [student] (1960-1964)
+    - > m:forum_journal "Forum Journal" [published-in] (1964-1967)
+      - > g:reform_party "Reform Party" [founder] (1967)
+  - ~> @bora_erim [schoolmate]
+  - ~> @deniz_kaya [editorial-circle]
+
+- Bora Erim @bora_erim [lawyer]
+  - > i:ankara_sbf [student] (1961-1965)
+    - > g:legal_aid_union "Legal Aid Union" [founder] (1966)
+      - > g:reform_party [legal-advisor] (1968-1971)
+  - x> g:reform_party [left] (1971)
+
+- Deniz Kaya @deniz_kaya [journalist]
+  - > m:forum_journal [editor] (1965-1969)
+    - > g:reform_party [media-circle] (1967-1970)
+  - ?> d:archive_note_14 "Archive Note 14" [mentioned] (1972)
+
+- Selim Aral @selim_aral [organizer]
+  - > g:legal_aid_union [member] (1966)
+    - !> e:workers_march_1969 "Workers March" [organizer] (1969)
+      - > p:ankara "Ankara" [place]
+  - ~> @bora_erim [associate]
