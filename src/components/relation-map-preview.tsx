@@ -15,25 +15,15 @@ interface RelationMapPreviewProps {
 }
 
 export function RelationMapPreview({ source }: RelationMapPreviewProps) {
-  const { result, svg, directPersonLinks } = useMemo(() => {
-    const rendered = parseAndRenderRelationMapSvg(source, { showLegend: true });
-    const nodeById = new Map(
-      rendered.result.document.nodes.map((node) => [node.id, node]),
-    );
-    const directLinks = rendered.result.document.edges.filter((edge) => {
-      const sourceNode = nodeById.get(edge.sourceId);
-      const targetNode = nodeById.get(edge.targetId);
-      return sourceNode?.type === "person" && targetNode?.type === "person";
-    });
-
-    return { ...rendered, directPersonLinks: directLinks };
+  const { result, svg } = useMemo(() => {
+    return parseAndRenderRelationMapSvg(source, { showLegend: true });
   }, [source]);
 
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const hasValidationMessages = result.issues.length > 0 || directPersonLinks.length > 0;
+  const hasValidationMessages = result.issues.length > 0;
 
   const handleWheel = (e: React.WheelEvent) => {
     if (!containerRef.current) return;
@@ -127,7 +117,7 @@ export function RelationMapPreview({ source }: RelationMapPreviewProps) {
   return (
     <div className="flex flex-col h-full overflow-hidden relative">
       {hasValidationMessages && (
-        <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-destructive/10 border-b border-destructive/20 text-destructive text-sm flex flex-col gap-1 max-h-48 overflow-auto">
+        <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-destructive/10 border-b border-destructive/20 text-destructive text-sm flex flex-col gap-1">
           {result.issues.map((issue) => (
             <div
               key={`${issue.line}-${issue.code}`}
@@ -136,15 +126,6 @@ export function RelationMapPreview({ source }: RelationMapPreviewProps) {
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>
                 Line {issue.line}: {issue.code} — {issue.message}
-              </span>
-            </div>
-          ))}
-          {directPersonLinks.map((edge) => (
-            <div key={edge.id} className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              <span>
-                Line {edge.line}: direct-person-link — Connect people through an
-                event, place, institution, group, or family node.
               </span>
             </div>
           ))}
