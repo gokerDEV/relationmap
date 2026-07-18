@@ -10,20 +10,15 @@ period: 1960-1975
   - > i:ankara_sbf "Ankara SBF" [student] (1960-1964)
     - > m:forum_journal "Forum Journal" [published-in] (1964-1967)
       - > g:reform_party "Reform Party" [founder] (1967)
-  - > e:soyer_erim_meeting "Soyer-Erim school circle" [schoolmate] (1962)
-    - > i:ankara_sbf [place]
-    - ~> @bora_erim "Bora Erim" [participant]
+  - > e:school_circle_1962 "Ankara SBF school circle" [schoolmate] (1962)
 
 - Bora Erim @bora_erim [lawyer]
   - > i:ankara_sbf [student] (1961-1965)
     - > g:legal_aid_union "Legal Aid Union" [founder] (1966)
       - > g:reform_party [legal-advisor] (1968-1971)
-  - > e:soyer_erim_meeting [schoolmate] (1962)
-    - > i:ankara_sbf [place]
-    - ~> @aylin_soyer [participant]
+  - > e:school_circle_1962 [schoolmate] (1962)
 
-- Reform Party g:reform_party [party]
-  - > e:reform_party_foundation "Reform Party foundation" [founded] (1967)
-    - > @aylin_soyer [founder]
-    - > @bora_erim [legal-advisor]
+- Deniz Kaya @deniz_kaya [journalist]
+  - > m:forum_journal [editor] (1965-1969)
+    - > g:reform_party [media-circle] (1967-1970)
 `;

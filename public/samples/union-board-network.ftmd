@@ -11,22 +11,19 @@ period: 1970-1985
     - > g:north_workers_union "North Workers Union" [founder] (1972)
       - !> e:steel_strike_1974 "Steel Strike" [organizer] (1974)
         - > d:collective_agreement_1975 "Collective Agreement" [source] (1975)
-  - > e:steel_strike_media_contact "Strike media contact" [media-contact] (1974)
-    - > m:city_gazette "City Gazette" [media]
-    - ~> @leyla_turan "Leyla Turan" [media-contact]
+  - ~> e:union_media_contact "Union media contact" [media-contact]
 
 - Orhan Tunc @orhan_tunc [industrialist]
   - > g:tunc_steel "Tunc Steel" [owner] (1968-1985)
     - > g:industrial_board "Industrial Board" [chair] (1976-1982)
       - > p:north_basin "North Basin" [region]
-  - x> g:north_workers_union [conflict] (1974)
+  - x> e:steel_strike_1974 [conflict] (1974)
 
 - Leyla Turan @leyla_turan [journalist]
-  - > m:city_gazette [reporter] (1971-1978)
-    - > e:steel_strike_media_contact [source]
-      - ~> @nermin_aksoy [source]
+  - > m:city_gazette "City Gazette" [reporter] (1971-1978)
     - > e:steel_strike_1974 [covered]
       - > d:collective_agreement_1975 [published]
+  - ~> e:union_media_contact [source]
 
 - North Workers Union g:north_workers_union [union]
   - > p:north_basin [base]
@@ -34,6 +31,5 @@ period: 1970-1985
   - x> g:tunc_steel [labor-conflict]
 
 - Industrial Board g:industrial_board [board]
-  - > @orhan_tunc [chair]
   - > g:tunc_steel [member-company]
   - ?> p:north_basin [regional-influence]
