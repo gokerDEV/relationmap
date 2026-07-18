@@ -56,27 +56,44 @@ export function RelationMapHowToSheet() {
             <Separator />
 
             <section className="space-y-3">
-              <h3 className="font-medium">No direct person-to-person links</h3>
+              <h3 className="font-medium">No person targets in relation lines</h3>
               <p className="text-muted-foreground leading-6">
-                Two people should not be connected directly. Use the shared
-                event, place, institution, group, family, publication, or
-                document that explains the relationship.
+                People are subjects, not nested relation targets. Do not connect
+                a person to another person, and do not put people under an event
+                node. Instead, make every person point to the same shared event,
+                place, institution, group, family, publication, or document node.
               </p>
               <div className="font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre overflow-auto">
                 {`// Avoid
 - A Person @a
   - ~> @b [friend]
 
+// Also avoid
+- A Person @a
+  - > e:school_circle "School circle" [friendship]
+    - ~> @b "B Person" [participant]
+
 // Prefer
 - A Person @a
   - > e:school_circle "School circle" [friendship]
     - > i:school "School" [place]
-    - ~> @b "B Person" [participant]
 
 - B Person @b
   - > e:school_circle [friendship]
     - > i:school [place]`}
               </div>
+            </section>
+
+            <Separator />
+
+            <section className="space-y-3">
+              <h3 className="font-medium">Forward layout</h3>
+              <p className="text-muted-foreground leading-6">
+                Indentation creates the logical order of the path. Reused nodes
+                are placed at the deepest/rightmost depth required by the map, and
+                edge constraints are propagated so relation lines do not flow
+                backwards.
+              </p>
             </section>
 
             <Separator />
@@ -123,7 +140,7 @@ x>   ended / split / left / disproved
                 A node keeps the same id everywhere. The renderer keeps nodes
                 neutral and colors the path by the top-level subject, so one
                 person's route can be followed across schools, groups, companies,
-                events, regions, and mediated people.
+                events, regions, and mediated relations.
               </p>
             </section>
           </div>
