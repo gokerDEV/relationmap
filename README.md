@@ -32,6 +32,46 @@ Instead of writing a vague `Academic Circle` cluster, write the actual instituti
 
 If two subjects share a university, party, company, union, publication, city, region, or event, they should point to the same node id. The renderer merges repeated ids.
 
+## No direct person-to-person links
+
+People should not be connected directly to other people. A relationship between two people should pass through the node that explains it: an event, place, institution, group, family, publication, document, or sector.
+
+Avoid:
+
+```markdown
+- A Person @a
+  - ~> @b "B Person" [friend]
+```
+
+Prefer:
+
+```markdown
+- A Person @a
+  - > e:school_circle "School circle" [friendship]
+    - > i:school "Shared School" [place]
+    - ~> @b "B Person" [participant]
+
+- B Person @b
+  - > e:school_circle [friendship]
+    - > i:school [place]
+```
+
+For family relations, use a family or event node:
+
+```markdown
+- A Person @a
+  - > e:a_b_marriage "A-B marriage" [spouse]
+    - > @b "B Person" [spouse]
+
+- C Person @c
+  - > f:family_ab "A-B family" [child]
+
+- D Person @d
+  - > f:family_ab [child]
+```
+
+This keeps the graph readable because person nodes do not turn into dense hairballs. The explanation lives in the middle node.
+
 ## Node ids
 
 ```text
@@ -72,7 +112,9 @@ Examples:
   - > i:boun "Boğaziçi University" [student]
     - > g:demir_holding "Demir Holding" [founder]
       - > p:marmara_ports "Marmara Ports" [region]
-  - ~> @ayse_kara "Ayşe Kara" [schoolmate]
+  - > e:boun_school_circle "Boun school circle" [schoolmate]
+    - > i:boun [place]
+    - ~> @ayse_kara "Ayşe Kara" [participant]
   - x> g:old_party "Old Party" [left]
   - ?> d:report_12 "Report 12" [mentioned]
 ```
@@ -128,20 +170,22 @@ Sibling rows are parallel relations without a stated sequence:
 - Repeated ids merge into one node.
 - Nodes are neutral and styled by type.
 - Edges are colored by the top-level subject.
-- This keeps a person's route visually traceable across institutions, groups, places, events, companies, and other people.
+- Person-to-person links are shown as validation warnings in the preview.
+- This keeps a person's route visually traceable across institutions, groups, places, events, companies, and mediated people.
 - Shared nodes make school friendships, organizational continuity, family ties, institutional careers, monopolies, cartels, unions, party movements, and regional power relations readable without fake clusters.
 
 ## Built-in samples
 
-The app includes three compact relationmap samples under `public/samples`:
+The app includes compact relationmap samples under `public/samples`:
 
 ```text
 academic-political-network.ftmd  school -> publication -> party / union paths
 family-business-region.ftmd      family -> company -> sector / region / board paths
 union-board-network.ftmd         union -> board -> media / event / document paths
+turkiye-1940.ftmd                detailed mediated Turkish left network sample
 ```
 
-They are intentionally fictional. They show structure and notation without turning sample data into claims about real people.
+Sample data should also avoid direct person-to-person links. Use event, institution, group, family, place, or document nodes to explain relationships.
 
 ## Development
 
