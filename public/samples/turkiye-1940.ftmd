@@ -9,80 +9,104 @@ period: 1930-1980
   - > i:arnavutkoy "Arnavutköy Amerikan Kız Koleji" [student] (1919-1931)
     - > i:michigan "Michigan Üniversitesi" [phd] (1931-1940) {Amerikalı hocalarınca keşfedilip burslu gönderildi}
       - > i:dtcf "Dil ve Tarih-Coğrafya Fakültesi" [faculty] (1940-1948) {Hasan Ali Yücel'in daveti}
-        - x> g:dtcf_state "Türkiye Büyük Millet Meclisi" [purged] (1948) {kararla üniversiteden atıldı}
-  - ~> p:manisa "Manisa" [fieldwork] (1945-1948) {toplumsal yapı araştırmaları}
+        - x> e:dtcf_purge_1948 "DTCF tasfiyesi" [purged] (1948) {kararla üniversiteden atıldı}
+          - > g:tbmm "Türkiye Büyük Millet Meclisi" [state-decision]
+  - ~> e:manisa_fieldwork "Manisa saha araştırması" [fieldwork] (1945-1948) {toplumsal yapı araştırmaları}
+    - > p:manisa "Manisa" [place]
+    - ~> @mubeccel "Mübeccel Kıray" [associate]
+    - ~> @fatma "Fatma Başaran" [assistant]
   - > g:barisseverler "Türk Barışseverler Cemiyeti" [founder] (1950)
     - !> e:kore_savasi "Kore Savaşı'na katılım" [opposed] (1950)
       - x> e:tkp_davasi "TKP davası" [imprisoned] (1951-1963)
   - > g:tkp "Türkiye Komünist Partisi" [member]
   - > g:tip "Türkiye İşçi Partisi" [chair] (1970-1971) {Aybar'ın istifasından sonra}
+    - > e:tip_leadership_1970 "TİP 1970 yönetim dönemi" [leadership]
+      - ~> @sadun "Sadun Aren" [ally]
+      - ~> @cem "Cem Eroğul" [colleague]
+    - > g:tip_bilim_kurulu "TİP Bilim Kurulu" [scientific-board]
+      - ~> @cem [member]
+    - > e:tip_education_circle "TİP eğitim ve öğrenci çevresi" [student-circle]
+      - ~> @metin "Metin Çulhoğlu" [student]
+    - x> e:tip_split_1969 "TİP iç ayrışması" [split] (1969)
+      - x> @aybar "Mehmet Ali Aybar" [rival]
+      - x> @fethi "Fethi Naci" [rival]
+      - x> @mihri "Mihri Belli" [rival]
     - x> e:12_eylul "12 Eylül darbesi" [closed] (1980)
-  - > f:boran_hatko "Nevzat Hatko" [husband] {Yunanca çevirmen, o da işinden atıldı}
-  - ~> @mubeccel "Mübeccel Kıray" [associate]
-  - ~> @fatma "Fatma Başaran" [assistant]
-  - ~> @metin "Metin Çulhoğlu" [student]
-  - ~> @sadun "Sadun Aren" [ally]
-  - ~> @mina "Mina Urgan" [friend]
-  - ~> @cem "Cem Eroğul" [colleague]
-  - x> @aybar "Mehmet Ali Aybar" [rival]
-  - x> @fethi "Fethi Naci" [rival]
-  - x> @mihri "Mihri Belli" [rival]
+  - > e:boran_hatko_marriage "Behice Boran - Nevzat Hatko evliliği" [spouse]
+    - > @nevzat_hatko "Nevzat Hatko" [husband] {Yunanca çevirmen, o da işinden atıldı}
+  - ~> e:tip_intellectual_circle "TİP aydın çevresi" [friendship]
+    - ~> @mina "Mina Urgan" [friend]
+
+- Nevzat Hatko @nevzat_hatko "Nevzat Hatko" [translator]
+  - > e:boran_hatko_marriage [spouse]
+    - > @behice [spouse]
 
 - Mina Urgan @mina "Mina Urgan" [academic] [writer] [socialist]
   - > i:istanbul_uni "İstanbul Üniversitesi" [academic] [english-literature]
   - > g:tip [founder]
-  - ~> @behice [friend] {"gördüğüm en zeki, en yetenekliydi" diyen Amerika'daki hocalardan biri}
+    - > e:tip_intellectual_circle [friendship]
+      - ~> @behice [friend] {"gördüğüm en zeki, en yetenekliydi" diyen Amerika'daki hocalardan biri}
 
 - Niyazi Berkes @berkes "Niyazi Berkes" [academic]
   - > i:dtcf [faculty] (1940-1948)
-    - x> g:dtcf_state [purged] (1948)
+    - x> e:dtcf_purge_1948 [purged] (1948)
       - > p:canada "Kanada" [emigrated]
 
 - Pertev Naili Boratav @pertev "Pertev Naili Boratav" [academic] [folklorist]
   - > i:dtcf [faculty] (1940-1948)
-    - x> g:dtcf_state [purged] (1948)
+    - x> e:dtcf_purge_1948 [purged] (1948)
       - > p:france "Fransa" [emigrated]
 
 - Muzaffer Şerif @serif "Muzaffer Şerif" [academic] [psychologist]
   - > i:dtcf [faculty]
-    - x> g:dtcf_state [purged]
+    - x> e:dtcf_purge_1948 [purged]
       - > p:usa "ABD" [emigrated] {sosyal psikolojinin kurucularından}
 
 - Mehmet Ali Aybar @aybar "Mehmet Ali Aybar" [lawyer] [socialist]
   - > g:tip [chair] (1962-1969)
-    - x> @behice [split] (1969) {Çekoslovakya işgali ve özgürcülük tartışması}
+    - x> e:tip_split_1969 [split] (1969) {Çekoslovakya işgali ve özgürcülük tartışması}
+      - x> @behice [opposition]
+      - x> @sadun [opposition]
   - !> m:altusser "Althusser'in üst belirlenim kavramı" [misreads]
-  - ~> @cem "Cem Eroğul" [close-friend] {"benim en yakın arkadaşımdı"}
-  - ~> @orhan_tuna "Orhan Tuna" [considered-as-leader]
+  - > e:aybar_cem_circle "Aybar-Cem Eroğul yakın çevresi" [friendship]
+    - ~> @cem "Cem Eroğul" [close-friend] {"benim en yakın arkadaşımdı"}
+  - ?> e:tip_leader_search_1961 "TİP lider arayışı" [considered-as-leader] (1961)
+    - ?> @orhan_tuna "Orhan Tuna" [considered-as-leader]
 
 - Sadun Aren @sadun "Sadun Aren" [economist]
   - > i:sbf "Ankara SBF" [academic]
   - > g:tip [co-leader] (1970-1971)
-  - ~> @behice [ally]
+    - > e:tip_leadership_1970 [co-leadership]
+      - ~> @behice [ally]
 
 - Cem Eroğul @cem "Cem Eroğul" [academic]
-  - > g:tip "TİP Bilim Kurulu" [member]
-  - ~> @behice [colleague]
-  - ~> @aybar [close-friend]
+  - > g:tip_bilim_kurulu [member]
+    - ~> @behice [colleague]
+  - > e:aybar_cem_circle [close-friend]
+    - ~> @aybar [close-friend]
 
 - Doğan Avcıoğlu @avcioglu "Doğan Avcıoğlu" [journalist] [theorist]
   - > m:yon "Yön dergisi" [editor] (1961-1967)
     - !> s:mdd "Milli Demokratik Devrim tezi" [advocates]
-      - x> @behice [rival]
-  - ~> @sevket "Şevket Süreyya Aydemir" [predecessor]
+      - x> e:mdd_tip_program_debate "MDD - TİP program tartışması" [rival]
+        - x> @behice [rival]
+  - ~> m:kadro "Kadro dergisi" [predecessor-line]
+    - ~> @sevket "Şevket Süreyya Aydemir" [predecessor]
 
 - Şevket Süreyya Aydemir @sevket "Şevket Süreyya Aydemir" [theorist]
-  - > m:kadro "Kadro dergisi" [editor] (1930s)
+  - > m:kadro [editor] (1930s)
 
 - Fethi Naci @fethi "Fethi Naci" [critic] [theorist]
   - > g:tip [member]
     - !> m:yon [aligned]
-      - x> @behice [rival] {yöncü tezleri TİP programına sokmak istedi}
+      - > e:mdd_tip_program_debate [program-debate]
+        - x> @behice [rival] {yöncü tezleri TİP programına sokmak istedi}
     - x> g:tip [resigned]
 
 - Mihri Belli @mihri "Mihri Belli" [theorist]
   - !> s:mdd [author] {Sovyetler Birliği çizgisi}
-    - x> @behice [rival]
+    - > e:mdd_tip_program_debate [program-debate]
+      - x> @behice [rival]
 
 - Hikmet Kıvılcımlı @kivilcimli "Hikmet Kıvılcımlı" [theorist] [independent]
   - ~> s:marksizm "Türk marksizmi" [contributor]
@@ -95,17 +119,23 @@ period: 1930-1980
   - ~> m:emek "Emek dergisi" [author] (1969) {eklemlenme teorisini Laclau'dan 20 yıl önce yazdı}
 
 - Metin Çulhoğlu @metin "Metin Çulhoğlu" [theorist]
-  - ~> @behice [student]
-  - ~> @sungur "Sungur Savran" [contemporary]
+  - > e:tip_education_circle [student-circle]
+    - ~> @behice [student]
+  - > e:marxist_theory_circle_1970s "1970'ler Marksist teori çevresi" [contemporary]
+    - ~> @sungur "Sungur Savran" [contemporary]
 
 - Mübeccel Kıray @mubeccel "Mübeccel Kıray" [sociologist]
-  - ~> @behice [associate]
+  - > e:manisa_fieldwork [fieldwork]
+    - ~> @behice [associate]
 
 - Fatma Başaran @fatma "Fatma Başaran" [assistant]
-  - ~> @behice [assistant] (1945) {Manisa saha araştırması}
+  - > e:manisa_fieldwork [assistant] (1945) {Manisa saha araştırması}
+    - ~> @behice [supervisor]
 
 - Hasan Ali Yücel @hasanali "Hasan Ali Yücel" [minister]
   - > i:dtcf [recruited] {Behice Boran'ı fakülteye getirdi}
+    - > e:dtcf_recruitment_1940 "DTCF akademik kadro daveti" [recruited]
+      - > @behice [faculty]
 
 - Halide Edip @halide "Halide Edip" [writer]
   - > i:robert_koleji "Robert Koleji" [first-turkish-graduate] {Boran'dan önce koleji bitiren ilk Türk kadın}
@@ -114,11 +144,13 @@ period: 1930-1980
   - > i:sbf [translator] {Marx'ın Kapital'ini ilk çevirenlerden}
 
 - Orhan Tuna @orhan_tuna "Orhan Tuna" [academic]
-  - ?> g:tip [considered-as-leader] (1961) {TİP kurucu işçileri önce ona teklif götürdü}
+  - ?> e:tip_leader_search_1961 [considered-as-leader] (1961) {TİP kurucu işçileri önce ona teklif götürdü}
+    - ?> g:tip [party]
 
 - Yalçın Küçük @yalcin "Yalçın Küçük" [writer] [politician]
   - ~> g:tip [milletvekili]
-  - ~> @behice [attended-funeral] (1987)
+  - ~> e:behice_funeral_1987 "Behice Boran cenazesi" [attended-funeral] (1987)
+    - > @behice [deceased]
 
 - Sencer Divitçioğlu @sencer "Sencer Divitçioğlu" [economist] [theorist]
   - ~> s:mdd "dönemin erkek teorisyenleri" [contemporary]
