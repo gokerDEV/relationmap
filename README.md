@@ -32,9 +32,9 @@ Instead of writing a vague `Academic Circle` cluster, write the actual instituti
 
 If two subjects share a university, party, company, union, publication, city, region, or event, they should point to the same node id. The renderer merges repeated ids.
 
-## No direct person-to-person links
+## No person targets in relation lines
 
-People should not be connected directly to other people. A relationship between two people should pass through the node that explains it: an event, place, institution, group, family, publication, document, or sector.
+People are subjects, not relation targets. A relationship between people must be expressed by linking each person to the same explanatory node: an event, place, institution, group, family, publication, document, or sector.
 
 Avoid:
 
@@ -43,34 +43,42 @@ Avoid:
   - ~> @b "B Person" [friend]
 ```
 
-Prefer:
+Also avoid putting people under a relation node:
+
+```markdown
+- A Person @a
+  - > e:school_circle "School circle" [friendship]
+    - ~> @b "B Person" [participant]
+```
+
+Prefer separate subject paths into the same node:
 
 ```markdown
 - A Person @a
   - > e:school_circle "School circle" [friendship]
     - > i:school "Shared School" [place]
-    - ~> @b "B Person" [participant]
 
 - B Person @b
   - > e:school_circle [friendship]
     - > i:school [place]
 ```
 
-For family relations, use a family or event node:
+For family and marriage relations, use shared family or event nodes:
 
 ```markdown
 - A Person @a
   - > e:a_b_marriage "A-B marriage" [spouse]
-    - > @b "B Person" [spouse]
+  - > f:family_ab "A-B family" [parent]
+
+- B Person @b
+  - > e:a_b_marriage [spouse]
+  - > f:family_ab [parent]
 
 - C Person @c
-  - > f:family_ab "A-B family" [child]
-
-- D Person @d
   - > f:family_ab [child]
 ```
 
-This keeps the graph readable because person nodes do not turn into dense hairballs. The explanation lives in the middle node.
+This keeps the graph readable because person nodes do not become dense hairballs. The explanation lives in the middle node.
 
 ## Node ids
 
@@ -114,7 +122,6 @@ Examples:
       - > p:marmara_ports "Marmara Ports" [region]
   - > e:boun_school_circle "Boun school circle" [schoolmate]
     - > i:boun [place]
-    - ~> @ayse_kara "Ayşe Kara" [participant]
   - x> g:old_party "Old Party" [left]
   - ?> d:report_12 "Report 12" [mentioned]
 ```
@@ -170,7 +177,9 @@ Sibling rows are parallel relations without a stated sequence:
 - Repeated ids merge into one node.
 - Nodes are neutral and styled by type.
 - Edges are colored by the top-level subject.
-- Person-to-person links are shown as validation warnings in the preview.
+- Relation lines that target `@person` are shown as validation warnings.
+- When the same relation node is reused at multiple indentation depths, it is placed at its deepest/rightmost required depth.
+- After parsing, edge constraints are propagated so every relation flows left-to-right; the renderer should not draw a logical step backwards.
 - This keeps a person's route visually traceable across institutions, groups, places, events, companies, and mediated people.
 - Shared nodes make school friendships, organizational continuity, family ties, institutional careers, monopolies, cartels, unions, party movements, and regional power relations readable without fake clusters.
 
@@ -185,7 +194,7 @@ union-board-network.ftmd         union -> board -> media / event / document path
 turkiye-1940.ftmd                detailed mediated Turkish left network sample
 ```
 
-Sample data should also avoid direct person-to-person links. Use event, institution, group, family, place, or document nodes to explain relationships.
+Sample data should also avoid relation lines targeting people. Use event, institution, group, family, place, or document nodes to explain relationships.
 
 ## Development
 
