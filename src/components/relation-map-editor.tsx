@@ -34,6 +34,10 @@ const RELATION_MAP_SAMPLES: RelationMapSample[] = [
     id: "union-board-network",
     label: "Union / Board / Media",
   },
+  {
+    id: "turkiye-1940",
+    label: "Turkiye / Left / 1940"
+  }
 ];
 
 export function RelationMapEditor() {
