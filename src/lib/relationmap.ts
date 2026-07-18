@@ -98,34 +98,28 @@ export const DEFAULT_RELATION_MAP_THEME: RelationMapTheme = {
 
 export const DEFAULT_RELATION_MAP_EXAMPLE = `---
 map: network
-country: Türkiye
-period: 1940-1975
+country: Fictional
+period: 1960-1975
 ---
 
-# Turkish Left Network
+# Mediated RelationMap Example
 
-- Behice Boran @behice [academic] [marxist]
-  - > i:dtcf "Ankara Üniversitesi DTCF" [academic]
-    - > g:tip "Türkiye İşçi Partisi" [chair] (1970-1971)
-  - > g:tkp "Türkiye Komünist Partisi" [member]
-  - ~> @sadun "Sadun Aren" [ally]
-  - ~> @mina "Mina Urgan" [friend]
+- Aylin Soyer @aylin_soyer [academic] [writer]
+  - > i:ankara_sbf "Ankara SBF" [student] (1960-1964)
+    - > m:forum_journal "Forum Journal" [published-in] (1964-1967)
+      - > g:reform_party "Reform Party" [founder] (1967)
+  - > e:school_circle_1962 "Ankara SBF school circle" [schoolmate] (1962)
 
-- Mina Urgan @mina [writer] [socialist]
-  - > i:istanbul_uni "İstanbul Üniversitesi" [academic]
-  - > i:dtcf [circle]
-    - > g:tip [founder]
-  - ~> @behice [friend]
+- Bora Erim @bora_erim [lawyer]
+  - > i:ankara_sbf [student] (1961-1965)
+    - > g:legal_aid_union "Legal Aid Union" [founder] (1966)
+      - > g:reform_party [legal-advisor] (1968-1971)
+  - > e:school_circle_1962 [schoolmate] (1962)
 
-- Sadun Aren @sadun [economist]
-  - > i:sbf "Ankara Üniversitesi SBF" [academic]
-    - > g:tip [founder]
-  - ~> @behice [ally]
-
-- Mehmet Ali Aybar @aybar [lawyer]
-  - > g:tip [chair] (1962-1969)
-  - x> @behice [split]
-  - x> @sadun [split]`;
+- Deniz Kaya @deniz_kaya [journalist]
+  - > m:forum_journal [editor] (1965-1969)
+    - > g:reform_party [media-circle] (1967-1970)
+`;
 
 type MutableDocument = {
   title?: string;
@@ -300,22 +294,23 @@ export function parseRelationMap(
       }
 
       const operator = linkMatch[1] ?? ">";
-      const target = parseNodeReference(linkMatch[2] ?? "", line, indent + 3, issues);
-      if (!target) continue;
-      const node = getOrCreateNode(document, target, line, parent.depth + 1);
-      const edge: RelationMapEdge = {
-        id: `r${document.edges.length + 1}`,
-        sourceId: parent.nodeId,
-        targetId: node.id,
-        rootId: parent.rootId,
-        kind: LINK_KIND_BY_OPERATOR[operator] ?? "confirmed",
-        tags: target.tags,
-        date: target.date,
-        note: target.note,
+      const target = parseNodeReference(
+        linkMatch[2] ?? "",
         line,
-      };
+        indent + 3,
+        issues,
+      );
+      if (!target) continue;
+      warnIfPersonTarget(target, line, indent + 3, issues);
+      const node = getOrCreateNode(document, target, line, parent.depth + 1);
+      const edge = createEdge(document, parent, node, operator, target, line);
       document.edges.push(edge);
-      stack.push({ level, nodeId: node.id, rootId: parent.rootId, depth: parent.depth + 1 });
+      stack.push({
+        level,
+        nodeId: node.id,
+        rootId: parent.rootId,
+        depth: parent.depth + 1,
+      });
       continue;
     }
 
@@ -323,27 +318,20 @@ export function parseRelationMap(
     if (!entity) continue;
     const parent = stack[level - 1];
     const depth = parent ? parent.depth + 1 : 0;
+    if (parent) warnIfPersonTarget(entity, line, indent + 3, issues);
     const node = getOrCreateNode(document, entity, line, depth);
 
     if (!parent) {
       if (!document.roots.includes(node.id)) document.roots.push(node.id);
       stack.push({ level, nodeId: node.id, rootId: node.id, depth });
     } else {
-      const edge: RelationMapEdge = {
-        id: `r${document.edges.length + 1}`,
-        sourceId: parent.nodeId,
-        targetId: node.id,
-        rootId: parent.rootId,
-        kind: "confirmed",
-        tags: entity.tags,
-        date: entity.date,
-        note: entity.note,
-        line,
-      };
+      const edge = createEdge(document, parent, node, ">", entity, line);
       document.edges.push(edge);
       stack.push({ level, nodeId: node.id, rootId: parent.rootId, depth });
     }
   }
+
+  enforceForwardDepths(document, issues);
 
   const finalDocument: RelationMapDocument = {
     title: document.title,
@@ -377,8 +365,8 @@ export function renderRelationMapSvg(
   const resolved = {
     cardWidth: options.cardWidth ?? 220,
     cardHeight: options.cardHeight ?? 78,
-    columnGap: options.columnGap ?? 110,
-    rowGap: options.rowGap ?? 38,
+    columnGap: options.columnGap ?? 120,
+    rowGap: options.rowGap ?? 42,
     padding: options.padding ?? 32,
     showLegend: options.showLegend ?? true,
     title: options.title ?? document.title,
@@ -386,13 +374,29 @@ export function renderRelationMapSvg(
 
   const nodeById = new Map(document.nodes.map((node) => [node.id, node]));
   const rootIndex = new Map(document.roots.map((id, index) => [id, index]));
-  const layout = computeLayout(document, resolved.cardWidth, resolved.cardHeight, resolved.columnGap, resolved.rowGap);
-  const contentWidth = Math.max(...Array.from(layout.values()).map((item) => item.x + resolved.cardWidth), 0);
-  const contentHeight = Math.max(...Array.from(layout.values()).map((item) => item.y + resolved.cardHeight), 0);
+  const layout = computeLayout(
+    document,
+    resolved.cardWidth,
+    resolved.cardHeight,
+    resolved.columnGap,
+    resolved.rowGap,
+  );
+  const positions = Array.from(layout.values());
+  const contentWidth = Math.max(
+    ...positions.map((item) => item.x + resolved.cardWidth),
+    0,
+  );
+  const contentHeight = Math.max(
+    ...positions.map((item) => item.y + resolved.cardHeight),
+    0,
+  );
   const titleHeight = resolved.title ? 44 : 0;
   const legendHeight = resolved.showLegend ? Math.min(document.roots.length, 8) * 20 + 28 : 0;
   const width = Math.max(760, contentWidth + resolved.padding * 2);
-  const height = Math.max(420, contentHeight + resolved.padding * 2 + titleHeight + legendHeight);
+  const height = Math.max(
+    420,
+    contentHeight + resolved.padding * 2 + titleHeight + legendHeight,
+  );
   const shiftX = resolved.padding;
   const shiftY = resolved.padding + titleHeight;
   const parts: string[] = [];
@@ -428,7 +432,9 @@ export function renderRelationMapSvg(
   for (const node of document.nodes) {
     const position = layout.get(node.id);
     if (!position) continue;
-    const rootColorValue = rootIndex.has(node.id) ? rootColor(node.id, rootIndex) : undefined;
+    const rootColorValue = rootIndex.has(node.id)
+      ? rootColor(node.id, rootIndex)
+      : undefined;
     renderNode(
       parts,
       node,
@@ -455,6 +461,80 @@ export function renderRelationMapSvg(
 
   parts.push("</svg>");
   return parts.join("");
+}
+
+function createEdge(
+  document: MutableDocument,
+  parent: StackEntry,
+  targetNode: RelationMapNode,
+  operator: string,
+  target: ParsedNodeReference,
+  line: number,
+): RelationMapEdge {
+  return {
+    id: `r${document.edges.length + 1}`,
+    sourceId: parent.nodeId,
+    targetId: targetNode.id,
+    rootId: parent.rootId,
+    kind: LINK_KIND_BY_OPERATOR[operator] ?? "confirmed",
+    tags: target.tags,
+    date: target.date,
+    note: target.note,
+    line,
+  };
+}
+
+function warnIfPersonTarget(
+  target: ParsedNodeReference,
+  line: number,
+  column: number,
+  issues: RelationMapIssue[],
+): void {
+  if (target.type !== "person") return;
+  issues.push(
+    issue(
+      line,
+      column,
+      "warning",
+      "person-target-link",
+      "Relation lines should not target a person. Link each person to the same event, place, institution, group, family, media, sector, or document node instead.",
+    ),
+  );
+}
+
+function enforceForwardDepths(
+  document: MutableDocument,
+  issues: RelationMapIssue[],
+): void {
+  const maxIterations = Math.max(1, document.nodesById.size * 2);
+  let changed = false;
+
+  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+    changed = false;
+    for (const edge of document.edges) {
+      const source = document.nodesById.get(edge.sourceId);
+      const target = document.nodesById.get(edge.targetId);
+      if (!source || !target) continue;
+      const nextDepth = source.depth + 1;
+      if (target.depth < nextDepth) {
+        target.depth = nextDepth;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+  }
+
+  if (changed) {
+    issues.push(
+      issue(
+        1,
+        1,
+        "warning",
+        "cyclic-depth",
+        "The map contains a cycle or repeated feedback path. Some nodes may be shifted right to keep relations flowing forward.",
+      ),
+    );
+  }
 }
 
 function readFrontmatter(lines: string[], metadata: Record<string, string>): number {
@@ -513,7 +593,8 @@ function parseNodeReference(
   const idMatch = value.match(/(^|\s)(@[A-Za-z0-9_-]+|[fgipemsd]:[A-Za-z0-9_-]+)/);
   let id = idMatch?.[2];
   if (id) {
-    value = `${value.slice(0, idMatch?.index ?? 0)} ${value.slice((idMatch?.index ?? 0) + (idMatch?.[0]?.length ?? 0))}`;
+    const matchIndex = idMatch.index ?? 0;
+    value = `${value.slice(0, matchIndex)} ${value.slice(matchIndex + (idMatch[0]?.length ?? 0))}`;
   }
 
   const label = normalize(value) || quotedLabel || (id ? labelFromId(id) : "");
@@ -555,7 +636,7 @@ function getOrCreateNode(
     existing.tags = Array.from(new Set([...existing.tags, ...ref.tags]));
     existing.date ??= ref.date;
     existing.note ??= ref.note;
-    existing.depth = Math.min(existing.depth, depth);
+    existing.depth = Math.max(existing.depth, depth);
     return existing;
   }
 
@@ -585,19 +666,25 @@ function computeLayout(
 ): Map<string, { x: number; y: number }> {
   const byDepth = new Map<number, RelationMapNode[]>();
   for (const node of document.nodes) {
-    const depth = Math.max(0, Math.min(node.depth, 8));
+    const depth = Math.max(0, node.depth);
     if (!byDepth.has(depth)) byDepth.set(depth, []);
     byDepth.get(depth)?.push(node);
   }
 
   const layout = new Map<string, { x: number; y: number }>();
   const depths = Array.from(byDepth.keys()).sort((a, b) => a - b);
+  const rowYByDepth = new Map<number, number>();
   for (const depth of depths) {
-    const nodes = (byDepth.get(depth) ?? []).sort((a, b) => a.firstSeen - b.firstSeen);
+    const nodes = (byDepth.get(depth) ?? []).sort((a, b) => {
+      const typeWeight = Number(a.type === "person") - Number(b.type === "person");
+      if (typeWeight !== 0) return typeWeight;
+      return a.firstSeen - b.firstSeen;
+    });
     nodes.forEach((node, row) => {
+      const rowY = rowYByDepth.get(depth) ?? 0;
       layout.set(node.id, {
         x: depth * (cardWidth + columnGap),
-        y: row * (cardHeight + rowGap),
+        y: rowY + row * (cardHeight + rowGap),
       });
     });
   }
@@ -611,25 +698,26 @@ function renderEdge(
   to: { x: number; y: number },
   color: string,
   theme: RelationMapTheme,
-) {
+): void {
   const distance = Math.max(40, Math.abs(to.x - from.x));
   const c1x = from.x + distance * 0.45;
   const c2x = to.x - distance * 0.45;
   const path = `M ${round(from.x)} ${round(from.y)} C ${round(c1x)} ${round(from.y)}, ${round(c2x)} ${round(to.y)}, ${round(to.x)} ${round(to.y)}`;
   const stroke = edge.kind === "ended" ? theme.edgeMuted : color;
   const opacity = edge.kind === "ended" ? 0.5 : edge.kind === "claimed" ? 0.72 : 0.92;
-  const width = edge.kind === "critical" ? 3 : 2;
-  const dash = edgeDash(edge.kind);
+  const strokeWidth = edge.kind === "critical" ? 3 : 2;
+  const dash = edge.kind === "weak" ? ' stroke-dasharray="6 5"' : edge.kind === "claimed" ? ' stroke-dasharray="3 5"' : edge.kind === "ended" ? ' stroke-dasharray="8 5"' : "";
+
   parts.push(
-    `<path d="${path}" fill="none" stroke="${attr(stroke)}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"${dash}/>`,
+    `<path d="${path}" fill="none" stroke="${attr(stroke)}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"${dash}/>`,
   );
 
-  const label = edge.tags[0] || formatLinkKind(edge.kind);
-  if (label || edge.date) {
-    const mx = (from.x + to.x) / 2;
-    const my = (from.y + to.y) / 2 - 6;
+  const label = edgeLabel(edge);
+  if (label) {
+    const midX = (from.x + to.x) / 2;
+    const midY = (from.y + to.y) / 2 - 8;
     parts.push(
-      `<text x="${round(mx)}" y="${round(my)}" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="600" fill="${attr(stroke)}" opacity="0.9">${text([label, edge.date].filter(Boolean).join(" · "))}</text>`,
+      `<text x="${round(midX)}" y="${round(midY)}" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="10" fill="${attr(stroke)}">${text(truncate(label, 26))}</text>`,
     );
   }
 }
@@ -643,26 +731,36 @@ function renderNode(
   height: number,
   theme: RelationMapTheme,
   rootColorValue?: string,
-) {
+): void {
   const typeColor = NODE_TYPE_COLORS[node.type];
-  const borderColor = rootColorValue ?? typeColor;
+  const stroke = rootColorValue ?? typeColor;
   parts.push(
-    `<rect x="${round(x)}" y="${round(y)}" width="${width}" height="${height}" rx="14" fill="${attr(theme.cardBackground)}" stroke="${attr(borderColor)}" stroke-width="2"/>`,
-    `<rect x="${round(x)}" y="${round(y)}" width="7" height="${height}" rx="3.5" fill="${attr(borderColor)}"/>`,
-    `<text x="${round(x + 16)}" y="${round(y + 22)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" fill="${attr(theme.text)}">${text(truncate(node.label, 28))}</text>`,
-    `<text x="${round(x + 16)}" y="${round(y + 40)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="${attr(theme.mutedText)}">${text(node.id)}</text>`,
-    `<text x="${round(x + width - 12)}" y="${round(y + 20)}" text-anchor="end" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="9" font-weight="700" fill="${attr(typeColor)}">${text(typeLabel(node.type))}</text>`,
+    `<rect x="${round(x)}" y="${round(y)}" width="${width}" height="${height}" rx="14" fill="${attr(theme.cardBackground)}" stroke="${attr(stroke)}" stroke-width="${rootColorValue ? 3 : 2}"/>`,
+    `<text x="${round(x + 14)}" y="${round(y + 20)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" fill="${attr(theme.text)}">${text(truncate(node.label, 27))}</text>`,
+    `<text x="${round(x + width - 12)}" y="${round(y + 18)}" text-anchor="end" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="8" font-weight="700" fill="${attr(typeColor)}">${text(node.type.toUpperCase())}</text>`,
+    `<text x="${round(x + 14)}" y="${round(y + 38)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="${attr(theme.mutedText)}">${text(truncate(node.id, 30))}</text>`,
   );
 
-  const chips = node.tags.slice(0, 2);
-  let chipX = x + 16;
-  for (const tag of chips) {
-    const chipWidth = Math.min(86, tag.length * 6 + 18);
+  const lowerText = node.date ? node.date : node.note;
+  if (lowerText) {
     parts.push(
-      `<rect x="${round(chipX)}" y="${round(y + 54)}" width="${round(chipWidth)}" height="16" rx="8" fill="${attr(typeColor)}" opacity="0.1"/>`,
-      `<text x="${round(chipX + 9)}" y="${round(y + 66)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="9" font-weight="600" fill="${attr(typeColor)}">${text(truncate(tag, 12))}</text>`,
+      `<text x="${round(x + 14)}" y="${round(y + 56)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="10" fill="${attr(theme.mutedText)}">${text(truncate(lowerText, 30))}</text>`,
     );
-    chipX += chipWidth + 6;
+  }
+
+  if (node.tags.length > 0) {
+    const tags = node.tags.slice(0, 3);
+    let tagX = x + 14;
+    const tagY = y + height - 16;
+    for (const tag of tags) {
+      const tagText = truncate(tag, 12);
+      const tagWidth = 12 + tagText.length * 6;
+      parts.push(
+        `<rect x="${round(tagX)}" y="${round(tagY - 10)}" width="${round(tagWidth)}" height="16" rx="8" fill="${attr(typeColor)}" opacity="0.12"/>`,
+        `<text x="${round(tagX + 6)}" y="${round(tagY + 1)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="9" fill="${attr(typeColor)}">${text(tagText)}</text>`,
+      );
+      tagX += tagWidth + 6;
+    }
   }
 }
 
@@ -674,27 +772,27 @@ function renderLegend(
   x: number,
   y: number,
   theme: RelationMapTheme,
-) {
+): void {
   parts.push(
-    `<text x="${round(x)}" y="${round(y)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" fill="${attr(theme.mutedText)}">Path colors</text>`,
+    `<text x="${round(x)}" y="${round(y)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" fill="${attr(theme.mutedText)}">PATH COLORS</text>`,
   );
+
   document.roots.slice(0, 8).forEach((rootId, index) => {
     const node = nodeById.get(rootId);
-    const itemY = y + 18 + index * 20;
+    const color = rootColor(rootId, rootIndex);
+    const itemY = y + 20 + index * 20;
     parts.push(
-      `<line x1="${round(x)}" y1="${round(itemY - 4)}" x2="${round(x + 26)}" y2="${round(itemY - 4)}" stroke="${attr(rootColor(rootId, rootIndex))}" stroke-width="3" stroke-linecap="round"/>`,
-      `<text x="${round(x + 34)}" y="${round(itemY)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="${attr(theme.mutedText)}">${text(node?.label ?? rootId)}</text>`,
+      `<line x1="${round(x)}" y1="${round(itemY)}" x2="${round(x + 24)}" y2="${round(itemY)}" stroke="${attr(color)}" stroke-width="3" stroke-linecap="round"/>`,
+      `<text x="${round(x + 34)}" y="${round(itemY + 4)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="${attr(theme.text)}">${text(truncate(node?.label ?? rootId, 42))}</text>`,
     );
   });
 }
 
-function nodeTypeFromId(id: string): RelationMapNodeType {
-  const prefix = id.startsWith("@") ? "@" : id.slice(0, 1);
-  return NODE_PREFIX_TYPES[prefix] ?? "person";
-}
-
-function labelFromId(id: string): string {
-  return id.replace(/^@/, "").replace(/^[a-z]:/, "").replace(/_/g, " ");
+function edgeLabel(edge: RelationMapEdge): string {
+  if (edge.tags.length > 0 && edge.date) return `${edge.tags[0]} · ${edge.date}`;
+  if (edge.tags.length > 0) return edge.tags[0] ?? "";
+  if (edge.date) return edge.date;
+  return "";
 }
 
 function rootColor(rootId: string, rootIndex: Map<string, number>): string {
@@ -704,37 +802,34 @@ function rootColor(rootId: string, rootIndex: Map<string, number>): string {
 
 function parallelOffset(rootId: string, rootIndex: Map<string, number>): number {
   const index = rootIndex.get(rootId) ?? 0;
-  return ((index % 5) - 2) * 4;
+  return ((index % 5) - 2) * 3;
 }
 
-function edgeDash(kind: RelationMapLinkKind): string {
-  if (kind === "weak") return ' stroke-dasharray="5 5"';
-  if (kind === "claimed") return ' stroke-dasharray="2 5"';
-  if (kind === "ended") return ' stroke-dasharray="7 5"';
-  return "";
+function nodeTypeFromId(id: string): RelationMapNodeType {
+  if (id.startsWith("@")) return "person";
+  const prefix = id.split(":", 1)[0] ?? "";
+  return NODE_PREFIX_TYPES[prefix] ?? "document";
 }
 
-function formatLinkKind(kind: RelationMapLinkKind): string {
-  if (kind === "weak") return "weak";
-  if (kind === "claimed") return "claimed";
-  if (kind === "ended") return "ended";
-  if (kind === "critical") return "critical";
-  return "linked";
+function labelFromId(id: string): string {
+  return id
+    .replace(/^@/, "")
+    .replace(/^[a-z]:/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function typeLabel(type: RelationMapNodeType): string {
-  const labels: Record<RelationMapNodeType, string> = {
-    person: "PERSON",
-    family: "FAMILY",
-    group: "GROUP",
-    institution: "INST",
-    place: "PLACE",
-    event: "EVENT",
-    media: "MEDIA",
-    sector: "SECTOR",
-    document: "DOC",
-  };
-  return labels[type];
+function slug(value: string): string {
+  return normalize(value)
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "node";
+}
+
+function normalize(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 function issue(
@@ -747,26 +842,13 @@ function issue(
   return { line, column, severity, code, message };
 }
 
-function normalize(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
-}
-
-function slug(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "") || "node";
+function truncate(value: string, length: number): string {
+  if (value.length <= length) return value;
+  return `${value.slice(0, Math.max(0, length - 1))}…`;
 }
 
 function round(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
-}
-
-function truncate(value: string, max: number): string {
-  if (value.length <= max) return value;
-  return `${value.slice(0, Math.max(0, max - 1))}…`;
 }
 
 function attr(value: string): string {
