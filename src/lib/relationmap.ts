@@ -30,6 +30,7 @@ export type RelationMapNode = {
   id: string;
   type: RelationMapNodeType;
   label: string;
+  color?: string;
   tags: string[];
   date?: string;
   note?: string;
@@ -74,6 +75,7 @@ export type RelationMapTheme = {
   text: string;
   mutedText: string;
   cardBackground: string;
+  relationColor: string;
   edgeMuted: string;
 };
 
@@ -93,6 +95,7 @@ export const DEFAULT_RELATION_MAP_THEME: RelationMapTheme = {
   text: "#18181b",
   mutedText: "#71717a",
   cardBackground: "#ffffff",
+  relationColor: "#71717a",
   edgeMuted: "#94a3b8",
 };
 
@@ -104,19 +107,19 @@ period: 1960-1975
 
 # Mediated RelationMap Example
 
-- Aylin Soyer @aylin_soyer [academic] [writer]
+- Aylin Soyer @aylin_soyer #7c3aed [academic] [writer]
   - > i:ankara_sbf "Ankara SBF" [student] (1960-1964)
     - > m:forum_journal "Forum Journal" [published-in] (1964-1967)
       - > g:reform_party "Reform Party" [founder] (1967)
-  - > e:school_circle_1962 "Ankara SBF school circle" [schoolmate] (1962)
+  - > e:school_circle_1962 "Ankara SBF school circle" #ca8a04 [schoolmate] (1962)
 
-- Bora Erim @bora_erim [lawyer]
+- Bora Erim @bora_erim #059669 [lawyer]
   - > i:ankara_sbf [student] (1961-1965)
     - > g:legal_aid_union "Legal Aid Union" [founder] (1966)
       - > g:reform_party [legal-advisor] (1968-1971)
   - > e:school_circle_1962 [schoolmate] (1962)
 
-- Deniz Kaya @deniz_kaya [journalist]
+- Deniz Kaya @deniz_kaya #2563eb [journalist]
   - > m:forum_journal [editor] (1965-1969)
     - > g:reform_party [media-circle] (1967-1970)
 `;
@@ -141,6 +144,7 @@ type ParsedNodeReference = {
   id: string;
   type: RelationMapNodeType;
   label: string;
+  color?: string;
   tags: string[];
   date?: string;
   note?: string;
@@ -180,17 +184,7 @@ const ROOT_COLORS = [
   "#16a34a",
 ];
 
-const NODE_TYPE_COLORS: Record<RelationMapNodeType, string> = {
-  person: "#18181b",
-  family: "#7c3aed",
-  group: "#dc2626",
-  institution: "#2563eb",
-  place: "#059669",
-  event: "#ca8a04",
-  media: "#c026d3",
-  sector: "#0891b2",
-  document: "#52525b",
-};
+const RELATION_NODE_COLOR = "#71717a";
 
 export function parseRelationMap(
   source: string,
@@ -301,10 +295,13 @@ export function parseRelationMap(
         issues,
       );
       if (!target) continue;
-      warnIfPersonTarget(target, line, indent + 3, issues);
+      if (target.type === "person") {
+        addPersonTargetIssue(line, indent + 3, issues);
+        continue;
+      }
+
       const node = getOrCreateNode(document, target, line, parent.depth + 1);
-      const edge = createEdge(document, parent, node, operator, target, line);
-      document.edges.push(edge);
+      document.edges.push(createEdge(document, parent, node, operator, target, line));
       stack.push({
         level,
         nodeId: node.id,
@@ -318,20 +315,21 @@ export function parseRelationMap(
     if (!entity) continue;
     const parent = stack[level - 1];
     const depth = parent ? parent.depth + 1 : 0;
-    if (parent) warnIfPersonTarget(entity, line, indent + 3, issues);
-    const node = getOrCreateNode(document, entity, line, depth);
 
+    if (parent && entity.type === "person") {
+      addPersonTargetIssue(line, indent + 3, issues);
+      continue;
+    }
+
+    const node = getOrCreateNode(document, entity, line, depth);
     if (!parent) {
       if (!document.roots.includes(node.id)) document.roots.push(node.id);
       stack.push({ level, nodeId: node.id, rootId: node.id, depth });
     } else {
-      const edge = createEdge(document, parent, node, ">", entity, line);
-      document.edges.push(edge);
+      document.edges.push(createEdge(document, parent, node, ">", entity, line));
       stack.push({ level, nodeId: node.id, rootId: parent.rootId, depth });
     }
   }
-
-  enforceForwardDepths(document, issues);
 
   const finalDocument: RelationMapDocument = {
     title: document.title,
@@ -391,7 +389,9 @@ export function renderRelationMapSvg(
     0,
   );
   const titleHeight = resolved.title ? 44 : 0;
-  const legendHeight = resolved.showLegend ? Math.min(document.roots.length, 8) * 20 + 28 : 0;
+  const legendHeight = resolved.showLegend
+    ? Math.min(document.roots.length, 8) * 20 + 28
+    : 0;
   const width = Math.max(760, contentWidth + resolved.padding * 2);
   const height = Math.max(
     420,
@@ -416,7 +416,7 @@ export function renderRelationMapSvg(
     const source = layout.get(edge.sourceId);
     const target = layout.get(edge.targetId);
     if (!source || !target) continue;
-    const color = rootColor(edge.rootId, rootIndex);
+    const color = rootColor(edge.rootId, rootIndex, nodeById);
     const offset = parallelOffset(edge.rootId, rootIndex);
     const from = {
       x: shiftX + source.x + resolved.cardWidth,
@@ -433,7 +433,7 @@ export function renderRelationMapSvg(
     const position = layout.get(node.id);
     if (!position) continue;
     const rootColorValue = rootIndex.has(node.id)
-      ? rootColor(node.id, rootIndex)
+      ? rootColor(node.id, rootIndex, nodeById)
       : undefined;
     renderNode(
       parts,
@@ -484,57 +484,20 @@ function createEdge(
   };
 }
 
-function warnIfPersonTarget(
-  target: ParsedNodeReference,
+function addPersonTargetIssue(
   line: number,
   column: number,
   issues: RelationMapIssue[],
 ): void {
-  if (target.type !== "person") return;
   issues.push(
     issue(
       line,
       column,
-      "warning",
+      "error",
       "person-target-link",
-      "Relation lines should not target a person. Link each person to the same event, place, institution, group, family, media, sector, or document node instead.",
+      "Relation lines must not target a person. Put each person as a top-level subject and connect them to the same event, place, institution, group, family, media, sector, or document node.",
     ),
   );
-}
-
-function enforceForwardDepths(
-  document: MutableDocument,
-  issues: RelationMapIssue[],
-): void {
-  const maxIterations = Math.max(1, document.nodesById.size * 2);
-  let changed = false;
-
-  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
-    changed = false;
-    for (const edge of document.edges) {
-      const source = document.nodesById.get(edge.sourceId);
-      const target = document.nodesById.get(edge.targetId);
-      if (!source || !target) continue;
-      const nextDepth = source.depth + 1;
-      if (target.depth < nextDepth) {
-        target.depth = nextDepth;
-        changed = true;
-      }
-    }
-    if (!changed) return;
-  }
-
-  if (changed) {
-    issues.push(
-      issue(
-        1,
-        1,
-        "warning",
-        "cyclic-depth",
-        "The map contains a cycle or repeated feedback path. Some nodes may be shifted right to keep relations flowing forward.",
-      ),
-    );
-  }
 }
 
 function readFrontmatter(lines: string[], metadata: Record<string, string>): number {
@@ -571,6 +534,12 @@ function parseNodeReference(
   value = value.replace(/"([^"]*)"/, (_, label: string) => {
     quotedLabel = label.trim() || undefined;
     return " ";
+  });
+
+  let color: string | undefined;
+  value = value.replace(/(^|\s)#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})(?=\s|$)/, (_, prefix: string, hex: string) => {
+    color = normalizeHex(hex);
+    return prefix;
   });
 
   const tags: string[] = [];
@@ -617,6 +586,7 @@ function parseNodeReference(
     id,
     type: nodeTypeFromId(id),
     label: label || labelFromId(id),
+    color,
     tags,
     date,
     note: notes.length ? notes.join("\n") : undefined,
@@ -633,6 +603,7 @@ function getOrCreateNode(
   const existing = document.nodesById.get(ref.id);
   if (existing) {
     if (ref.label && existing.label === labelFromId(existing.id)) existing.label = ref.label;
+    if (ref.color && !existing.color) existing.color = ref.color;
     existing.tags = Array.from(new Set([...existing.tags, ...ref.tags]));
     existing.date ??= ref.date;
     existing.note ??= ref.note;
@@ -644,6 +615,7 @@ function getOrCreateNode(
     id: ref.id,
     type: ref.type,
     label: ref.label || labelFromId(ref.id),
+    color: ref.color,
     tags: ref.tags,
     date: ref.date,
     note: ref.note,
@@ -673,18 +645,16 @@ function computeLayout(
 
   const layout = new Map<string, { x: number; y: number }>();
   const depths = Array.from(byDepth.keys()).sort((a, b) => a - b);
-  const rowYByDepth = new Map<number, number>();
   for (const depth of depths) {
     const nodes = (byDepth.get(depth) ?? []).sort((a, b) => {
-      const typeWeight = Number(a.type === "person") - Number(b.type === "person");
-      if (typeWeight !== 0) return typeWeight;
+      if (a.type === "person" && b.type !== "person") return -1;
+      if (a.type !== "person" && b.type === "person") return 1;
       return a.firstSeen - b.firstSeen;
     });
     nodes.forEach((node, row) => {
-      const rowY = rowYByDepth.get(depth) ?? 0;
       layout.set(node.id, {
         x: depth * (cardWidth + columnGap),
-        y: rowY + row * (cardHeight + rowGap),
+        y: row * (cardHeight + rowGap),
       });
     });
   }
@@ -732,12 +702,17 @@ function renderNode(
   theme: RelationMapTheme,
   rootColorValue?: string,
 ): void {
-  const typeColor = NODE_TYPE_COLORS[node.type];
-  const stroke = rootColorValue ?? typeColor;
+  const isPerson = node.type === "person";
+  const accent = isPerson
+    ? node.color ?? rootColorValue ?? RELATION_NODE_COLOR
+    : node.color ?? theme.relationColor;
+  const typeLabelColor = isPerson ? accent : node.color ?? theme.relationColor;
+  const strokeWidth = isPerson ? 3 : node.color ? 2.5 : 1.5;
+
   parts.push(
-    `<rect x="${round(x)}" y="${round(y)}" width="${width}" height="${height}" rx="14" fill="${attr(theme.cardBackground)}" stroke="${attr(stroke)}" stroke-width="${rootColorValue ? 3 : 2}"/>`,
+    `<rect x="${round(x)}" y="${round(y)}" width="${width}" height="${height}" rx="14" fill="${attr(theme.cardBackground)}" stroke="${attr(accent)}" stroke-width="${strokeWidth}"/>`,
     `<text x="${round(x + 14)}" y="${round(y + 20)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" fill="${attr(theme.text)}">${text(truncate(node.label, 27))}</text>`,
-    `<text x="${round(x + width - 12)}" y="${round(y + 18)}" text-anchor="end" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="8" font-weight="700" fill="${attr(typeColor)}">${text(node.type.toUpperCase())}</text>`,
+    `<text x="${round(x + width - 12)}" y="${round(y + 18)}" text-anchor="end" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="8" font-weight="700" fill="${attr(typeLabelColor)}">${text(node.type.toUpperCase())}</text>`,
     `<text x="${round(x + 14)}" y="${round(y + 38)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="${attr(theme.mutedText)}">${text(truncate(node.id, 30))}</text>`,
   );
 
@@ -756,8 +731,8 @@ function renderNode(
       const tagText = truncate(tag, 12);
       const tagWidth = 12 + tagText.length * 6;
       parts.push(
-        `<rect x="${round(tagX)}" y="${round(tagY - 10)}" width="${round(tagWidth)}" height="16" rx="8" fill="${attr(typeColor)}" opacity="0.12"/>`,
-        `<text x="${round(tagX + 6)}" y="${round(tagY + 1)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="9" fill="${attr(typeColor)}">${text(tagText)}</text>`,
+        `<rect x="${round(tagX)}" y="${round(tagY - 10)}" width="${round(tagWidth)}" height="16" rx="8" fill="${attr(accent)}" opacity="0.12"/>`,
+        `<text x="${round(tagX + 6)}" y="${round(tagY + 1)}" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="9" fill="${attr(accent)}">${text(tagText)}</text>`,
       );
       tagX += tagWidth + 6;
     }
@@ -779,7 +754,7 @@ function renderLegend(
 
   document.roots.slice(0, 8).forEach((rootId, index) => {
     const node = nodeById.get(rootId);
-    const color = rootColor(rootId, rootIndex);
+    const color = rootColor(rootId, rootIndex, nodeById);
     const itemY = y + 20 + index * 20;
     parts.push(
       `<line x1="${round(x)}" y1="${round(itemY)}" x2="${round(x + 24)}" y2="${round(itemY)}" stroke="${attr(color)}" stroke-width="3" stroke-linecap="round"/>`,
@@ -795,7 +770,13 @@ function edgeLabel(edge: RelationMapEdge): string {
   return "";
 }
 
-function rootColor(rootId: string, rootIndex: Map<string, number>): string {
+function rootColor(
+  rootId: string,
+  rootIndex: Map<string, number>,
+  nodeById: Map<string, RelationMapNode>,
+): string {
+  const rootNode = nodeById.get(rootId);
+  if (rootNode?.color) return rootNode.color;
   const index = rootIndex.get(rootId) ?? 0;
   return ROOT_COLORS[index % ROOT_COLORS.length] ?? ROOT_COLORS[0];
 }
@@ -819,13 +800,23 @@ function labelFromId(id: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function normalizeHex(hex: string): string {
+  const value = hex.toLowerCase();
+  if (value.length === 3) {
+    return `#${value[0]}${value[0]}${value[1]}${value[1]}${value[2]}${value[2]}`;
+  }
+  return `#${value}`;
+}
+
 function slug(value: string): string {
-  return normalize(value)
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "") || "node";
+  return (
+    normalize(value)
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "node"
+  );
 }
 
 function normalize(value: string): string {

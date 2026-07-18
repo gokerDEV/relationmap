@@ -6,20 +6,20 @@ period: 1970-1985
 
 # Union / Board / Media Map
 
-- Nermin Aksoy @nermin_aksoy [unionist]
+- Nermin Aksoy @nermin_aksoy #7c3aed [unionist]
   - > i:istanbul_law "İstanbul Law Faculty" [student] (1967-1971)
     - > g:north_workers_union "North Workers Union" [founder] (1972)
-      - !> e:steel_strike_1974 "Steel Strike" [organizer] (1974)
+      - !> e:steel_strike_1974 "Steel Strike" #dc2626 [organizer] (1974)
         - > d:collective_agreement_1975 "Collective Agreement" [source] (1975)
   - ~> e:union_media_contact "Union media contact" [media-contact]
 
-- Orhan Tunc @orhan_tunc [industrialist]
+- Orhan Tunc @orhan_tunc #dc2626 [industrialist]
   - > g:tunc_steel "Tunc Steel" [owner] (1968-1985)
     - > g:industrial_board "Industrial Board" [chair] (1976-1982)
       - > p:north_basin "North Basin" [region]
   - x> e:steel_strike_1974 [conflict] (1974)
 
-- Leyla Turan @leyla_turan [journalist]
+- Leyla Turan @leyla_turan #2563eb [journalist]
   - > m:city_gazette "City Gazette" [reporter] (1971-1978)
     - > e:steel_strike_1974 [covered]
       - > d:collective_agreement_1975 [published]

@@ -5,125 +5,125 @@ period: 1930-1980
 ---
 # Türk Solu Ağı (Behice Boran ekseninde)
 
-- Behice Boran @behice "Behice Boran" [academic] [marxist] [sociologist]
+- Behice Boran @behice "Behice Boran" #7c3aed [academic] [marxist] [sociologist]
   - > i:arnavutkoy "Arnavutköy Amerikan Kız Koleji" [student] (1919-1931)
     - > i:michigan "Michigan Üniversitesi" [phd] (1931-1940) {Amerikalı hocalarınca keşfedilip burslu gönderildi}
       - > i:dtcf "Dil ve Tarih-Coğrafya Fakültesi" [faculty] (1940-1948) {Hasan Ali Yücel'in daveti}
-        - x> e:dtcf_purge_1948 "DTCF tasfiyesi" [purged] (1948) {kararla üniversiteden atıldı}
+        - x> e:dtcf_purge_1948 "DTCF tasfiyesi" #dc2626 [purged] (1948) {kararla üniversiteden atıldı}
           - > g:tbmm "Türkiye Büyük Millet Meclisi" [state-decision]
-  - ~> e:manisa_fieldwork "Manisa saha araştırması" [fieldwork] (1945-1948) {toplumsal yapı araştırmaları}
+  - ~> e:manisa_fieldwork "Manisa saha araştırması" #ca8a04 [fieldwork] (1945-1948) {toplumsal yapı araştırmaları}
     - > p:manisa "Manisa" [place]
   - > g:barisseverler "Türk Barışseverler Cemiyeti" [founder] (1950)
-    - !> e:kore_savasi "Kore Savaşı'na katılım" [opposed] (1950)
-      - x> e:tkp_davasi "TKP davası" [imprisoned] (1951-1963)
+    - !> e:kore_savasi "Kore Savaşı'na katılım" #dc2626 [opposed] (1950)
+      - x> e:tkp_davasi "TKP davası" #dc2626 [imprisoned] (1951-1963)
   - > g:tkp "Türkiye Komünist Partisi" [member]
   - > g:tip "Türkiye İşçi Partisi" [chair] (1970-1971) {Aybar'ın istifasından sonra}
     - > e:tip_leadership_1970 "TİP 1970 yönetim dönemi" [leadership]
     - > g:tip_bilim_kurulu "TİP Bilim Kurulu" [scientific-board]
     - > e:tip_education_circle "TİP eğitim ve öğrenci çevresi" [student-circle]
-    - x> e:tip_split_1969 "TİP iç ayrışması" [split] (1969)
-    - x> e:12_eylul "12 Eylül darbesi" [closed] (1980)
-  - > e:boran_hatko_marriage "Behice Boran - Nevzat Hatko evliliği" [spouse]
+    - x> e:tip_split_1969 "TİP iç ayrışması" #dc2626 [split] (1969)
+    - x> e:12_eylul "12 Eylül darbesi" #dc2626 [closed] (1980)
+  - > e:boran_hatko_marriage "Behice Boran - Nevzat Hatko evliliği" #0891b2 [spouse]
   - ~> e:tip_intellectual_circle "TİP aydın çevresi" [friendship]
 
-- Nevzat Hatko @nevzat_hatko "Nevzat Hatko" [translator]
+- Nevzat Hatko @nevzat_hatko "Nevzat Hatko" #0891b2 [translator]
   - > e:boran_hatko_marriage [spouse] {Yunanca çevirmen, o da işinden atıldı}
 
-- Mina Urgan @mina "Mina Urgan" [academic] [writer] [socialist]
+- Mina Urgan @mina "Mina Urgan" #059669 [academic] [writer] [socialist]
   - > i:istanbul_uni "İstanbul Üniversitesi" [academic] [english-literature]
   - > g:tip [founder]
     - > e:tip_intellectual_circle [friendship] {"gördüğüm en zeki, en yetenekliydi" diyen Amerika'daki hocalardan biri}
 
-- Niyazi Berkes @berkes "Niyazi Berkes" [academic]
+- Niyazi Berkes @berkes "Niyazi Berkes" #2563eb [academic]
   - > i:dtcf [faculty] (1940-1948)
     - x> e:dtcf_purge_1948 [purged] (1948)
       - > p:canada "Kanada" [emigrated]
 
-- Pertev Naili Boratav @pertev "Pertev Naili Boratav" [academic] [folklorist]
+- Pertev Naili Boratav @pertev "Pertev Naili Boratav" #16a34a [academic] [folklorist]
   - > i:dtcf [faculty] (1940-1948)
     - x> e:dtcf_purge_1948 [purged] (1948)
       - > p:france "Fransa" [emigrated]
 
-- Muzaffer Şerif @serif "Muzaffer Şerif" [academic] [psychologist]
+- Muzaffer Şerif @serif "Muzaffer Şerif" #ea580c [academic] [psychologist]
   - > i:dtcf [faculty]
     - x> e:dtcf_purge_1948 [purged]
       - > p:usa "ABD" [emigrated] {sosyal psikolojinin kurucularından}
 
-- Mehmet Ali Aybar @aybar "Mehmet Ali Aybar" [lawyer] [socialist]
+- Mehmet Ali Aybar @aybar "Mehmet Ali Aybar" #dc2626 [lawyer] [socialist]
   - > g:tip [chair] (1962-1969)
     - x> e:tip_split_1969 [split] (1969) {Çekoslovakya işgali ve özgürcülük tartışması}
   - !> m:altusser "Althusser'in üst belirlenim kavramı" [misreads]
   - > e:aybar_cem_circle "Aybar-Cem Eroğul yakın çevresi" [friendship] {"benim en yakın arkadaşımdı"}
   - ?> e:tip_leader_search_1961 "TİP lider arayışı" [considered-as-leader] (1961)
 
-- Sadun Aren @sadun "Sadun Aren" [economist]
+- Sadun Aren @sadun "Sadun Aren" #4f46e5 [economist]
   - > i:sbf "Ankara SBF" [academic]
   - > g:tip [co-leader] (1970-1971)
     - > e:tip_leadership_1970 [co-leadership]
 
-- Cem Eroğul @cem "Cem Eroğul" [academic]
+- Cem Eroğul @cem "Cem Eroğul" #0f766e [academic]
   - > g:tip_bilim_kurulu [member]
   - > e:aybar_cem_circle [close-friend]
 
-- Doğan Avcıoğlu @avcioglu "Doğan Avcıoğlu" [journalist] [theorist]
+- Doğan Avcıoğlu @avcioglu "Doğan Avcıoğlu" #c026d3 [journalist] [theorist]
   - > m:yon "Yön dergisi" [editor] (1961-1967)
     - !> s:mdd "Milli Demokratik Devrim tezi" [advocates]
-      - x> e:mdd_tip_program_debate "MDD - TİP program tartışması" [rival]
+      - x> e:mdd_tip_program_debate "MDD - TİP program tartışması" #dc2626 [rival]
   - ~> m:kadro "Kadro dergisi" [predecessor-line]
 
-- Şevket Süreyya Aydemir @sevket "Şevket Süreyya Aydemir" [theorist]
+- Şevket Süreyya Aydemir @sevket "Şevket Süreyya Aydemir" #0ea5e9 [theorist]
   - > m:kadro [editor] (1930s)
 
-- Fethi Naci @fethi "Fethi Naci" [critic] [theorist]
+- Fethi Naci @fethi "Fethi Naci" #f97316 [critic] [theorist]
   - > g:tip [member]
-    - !> m:yon [aligned]
-      - > e:mdd_tip_program_debate [program-debate] {yöncü tezleri TİP programına sokmak istedi}
+    - > e:mdd_tip_program_debate [program-debate] {yöncü tezleri TİP programına sokmak istedi}
     - x> g:tip [resigned]
+  - !> m:yon [aligned]
 
-- Mihri Belli @mihri "Mihri Belli" [theorist]
+- Mihri Belli @mihri "Mihri Belli" #ef4444 [theorist]
   - !> s:mdd [author] {Sovyetler Birliği çizgisi}
     - > e:mdd_tip_program_debate [program-debate]
 
-- Hikmet Kıvılcımlı @kivilcimli "Hikmet Kıvılcımlı" [theorist] [independent]
+- Hikmet Kıvılcımlı @kivilcimli "Hikmet Kıvılcımlı" #84cc16 [theorist] [independent]
   - ~> s:marksizm "Türk marksizmi" [contributor]
 
-- Şefik Hüsnü @sefik "Şefik Hüsnü" [theorist]
+- Şefik Hüsnü @sefik "Şefik Hüsnü" #10b981 [theorist]
   - > g:komintern "Komintern" [executive-member] (1925-)
     - !> s:marksizm [pioneer] {Türkiye'ye Marksizmi getiren ilk isim}
 
-- Korkut Boratav @korkut "Korkut Boratav" [economist]
+- Korkut Boratav @korkut "Korkut Boratav" #6366f1 [economist]
   - ~> m:emek "Emek dergisi" [author] (1969) {eklemlenme teorisini Laclau'dan 20 yıl önce yazdı}
 
-- Metin Çulhoğlu @metin "Metin Çulhoğlu" [theorist]
+- Metin Çulhoğlu @metin "Metin Çulhoğlu" #14b8a6 [theorist]
   - > e:tip_education_circle [student-circle]
   - > e:marxist_theory_circle_1970s "1970'ler Marksist teori çevresi" [contemporary]
 
-- Mübeccel Kıray @mubeccel "Mübeccel Kıray" [sociologist]
+- Mübeccel Kıray @mubeccel "Mübeccel Kıray" #a855f7 [sociologist]
   - > e:manisa_fieldwork [fieldwork]
 
-- Fatma Başaran @fatma "Fatma Başaran" [assistant]
+- Fatma Başaran @fatma "Fatma Başaran" #22c55e [assistant]
   - > e:manisa_fieldwork [assistant] (1945) {Manisa saha araştırması}
 
-- Hasan Ali Yücel @hasanali "Hasan Ali Yücel" [minister]
+- Hasan Ali Yücel @hasanali "Hasan Ali Yücel" #f59e0b [minister]
   - > i:dtcf [recruited] {Behice Boran'ı fakülteye getirdi}
     - > e:dtcf_recruitment_1940 "DTCF akademik kadro daveti" [recruited]
 
-- Halide Edip @halide "Halide Edip" [writer]
+- Halide Edip @halide "Halide Edip" #ec4899 [writer]
   - > i:robert_koleji "Robert Koleji" [first-turkish-graduate] {Boran'dan önce koleji bitiren ilk Türk kadın}
 
-- Mehmet Selik @selik "Mehmet Selik" [academic]
+- Mehmet Selik @selik "Mehmet Selik" #64748b [academic]
   - > i:sbf [translator] {Marx'ın Kapital'ini ilk çevirenlerden}
 
-- Orhan Tuna @orhan_tuna "Orhan Tuna" [academic]
+- Orhan Tuna @orhan_tuna "Orhan Tuna" #94a3b8 [academic]
   - ?> e:tip_leader_search_1961 [considered-as-leader] (1961) {TİP kurucu işçileri önce ona teklif götürdü}
     - ?> g:tip [party]
 
-- Yalçın Küçük @yalcin "Yalçın Küçük" [writer] [politician]
+- Yalçın Küçük @yalcin "Yalçın Küçük" #eab308 [writer] [politician]
   - ~> g:tip [milletvekili]
   - ~> e:behice_funeral_1987 "Behice Boran cenazesi" [attended-funeral] (1987)
 
-- Sencer Divitçioğlu @sencer "Sencer Divitçioğlu" [economist] [theorist]
+- Sencer Divitçioğlu @sencer "Sencer Divitçioğlu" #38bdf8 [economist] [theorist]
   - ~> s:mdd "dönemin erkek teorisyenleri" [contemporary]
 
-- İdris Küçükömer @idris "İdris Küçükömer" [theorist]
+- İdris Küçükömer @idris "İdris Küçükömer" #fb7185 [theorist]
   - ~> s:mdd "dönemin erkek teorisyenleri" [contemporary]
