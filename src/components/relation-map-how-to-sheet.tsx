@@ -56,6 +56,32 @@ export function RelationMapHowToSheet() {
             <Separator />
 
             <section className="space-y-3">
+              <h3 className="font-medium">No direct person-to-person links</h3>
+              <p className="text-muted-foreground leading-6">
+                Two people should not be connected directly. Use the shared
+                event, place, institution, group, family, publication, or
+                document that explains the relationship.
+              </p>
+              <div className="font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre overflow-auto">
+                {`// Avoid
+- A Person @a
+  - ~> @b [friend]
+
+// Prefer
+- A Person @a
+  - > e:school_circle "School circle" [friendship]
+    - > i:school "School" [place]
+    - ~> @b "B Person" [participant]
+
+- B Person @b
+  - > e:school_circle [friendship]
+    - > i:school [place]`}
+              </div>
+            </section>
+
+            <Separator />
+
+            <section className="space-y-3">
               <h3 className="font-medium">Node ids</h3>
               <div className="font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre overflow-auto">
                 {`@id   person
@@ -97,7 +123,7 @@ x>   ended / split / left / disproved
                 A node keeps the same id everywhere. The renderer keeps nodes
                 neutral and colors the path by the top-level subject, so one
                 person's route can be followed across schools, groups, companies,
-                events, regions, and other people.
+                events, regions, and mediated people.
               </p>
             </section>
           </div>

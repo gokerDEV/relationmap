@@ -15,19 +15,24 @@ period: 1980-2020
   - > @cem_demir "Cem Demir" [member]
 
 - Aylin Demir @aylin_demir [executive]
+  - > f:demir_family [member]
   - > i:boun "Boğaziçi University" [student] (1998-2002)
+    - > e:boun_1998_cohort "Boğaziçi 1998 cohort" [classmate]
+      - ~> @kaan_yildiz "Kaan Yildiz" [classmate]
     - > g:demir_holding [board] (2008-2020)
       - > p:marmara_ports [region]
       - > g:port_services_as "Port Services A.Ş." [subsidiary]
-  - ~> @kaan_yildiz [classmate]
 
 - Cem Demir @cem_demir [lawyer]
+  - > f:demir_family [member]
   - > i:istanbul_law "İstanbul Law Faculty" [student] (1996-2000)
     - > g:demir_holding [legal-director] (2005-2018)
       - > d:port_tender_file "Port Tender File" [document] (2012)
 
 - Kaan Yildiz @kaan_yildiz [business]
   - > i:boun [student] (1998-2002)
+    - > e:boun_1998_cohort [classmate]
+      - ~> @aylin_demir [classmate]
     - > g:yildiz_maritime "Yıldız Maritime" [founder] (2006)
       - > p:marmara_ports [region]
       - ?> g:port_services_as [coordination-claim] (2014)
