@@ -39,6 +39,9 @@ jobs:
           GITHUB_PAGES: "true"
           NEXT_PUBLIC_BASE_PATH: /relationmap
 
+      - name: Disable Jekyll
+        run: touch out/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
