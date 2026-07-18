@@ -43,11 +43,11 @@ export function RelationMapHowToSheet() {
                 the institution.
               </p>
               <div className="font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre overflow-auto">
-                {`- A Person @a
+                {`- A Person @a #7c3aed
   - > i:school "School" [student]
     - > g:company "Company" [founder]
 
-- B Person @b
+- B Person @b #059669
   - > i:school [classmate]
     - > g:company [board]`}
               </div>
@@ -74,11 +74,11 @@ export function RelationMapHowToSheet() {
     - ~> @b "B Person" [participant]
 
 // Prefer
-- A Person @a
+- A Person @a #7c3aed
   - > e:school_circle "School circle" [friendship]
     - > i:school "School" [place]
 
-- B Person @b
+- B Person @b #059669
   - > e:school_circle [friendship]
     - > i:school [place]`}
               </div>
@@ -87,12 +87,30 @@ export function RelationMapHowToSheet() {
             <Separator />
 
             <section className="space-y-3">
-              <h3 className="font-medium">Forward layout</h3>
+              <h3 className="font-medium">Colors</h3>
               <p className="text-muted-foreground leading-6">
-                Indentation creates the logical order of the path. Reused nodes
-                are placed at the deepest/rightmost depth required by the map, and
-                edge constraints are propagated so relation lines do not flow
-                backwards.
+                Add <code>#hex</code> to a person to color that person card and
+                all path lines coming from that top-level subject. Relation nodes
+                are gray by default. Add <code>#hex</code> to an event, group,
+                institution, place, family, media, sector, or document only when
+                that node needs an accent color.
+              </p>
+              <div className="font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre overflow-auto">
+                {`- Behice Boran @behice #7c3aed [academic]
+  - > i:dtcf "DTCF" [faculty]
+    - x> e:dtcf_purge_1948 "DTCF purge" #dc2626 [purged]`}
+              </div>
+            </section>
+
+            <Separator />
+
+            <section className="space-y-3">
+              <h3 className="font-medium">Stable depth</h3>
+              <p className="text-muted-foreground leading-6">
+                Indentation creates the logical order of the path. A reused node
+                is placed at the deepest indentation where it appears. The layout
+                does not repeatedly push shared nodes to the right, so repeated
+                references do not explode into an unreadable horizontal chain.
               </p>
             </section>
 
@@ -132,15 +150,16 @@ x>   ended / split / left / disproved
               <h3 className="font-medium">Fields</h3>
               <div className="font-mono bg-muted p-3 rounded-md text-muted-foreground whitespace-pre overflow-auto">
                 {`"..."  first-use display label for a node
+#hex   optional node color
 [...]  relation or node tags
 (...)  date or date range
 {...}  plain note`}
               </div>
               <p className="text-muted-foreground leading-6">
-                A node keeps the same id everywhere. The renderer keeps nodes
-                neutral and colors the path by the top-level subject, so one
-                person's route can be followed across schools, groups, companies,
-                events, regions, and mediated relations.
+                A node keeps the same id everywhere. The renderer keeps relation
+                nodes neutral and colors paths by the top-level subject, so one
+                person&apos;s route can be followed across schools, groups,
+                companies, events, regions, and mediated relations.
               </p>
             </section>
           </div>
