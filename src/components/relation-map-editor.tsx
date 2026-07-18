@@ -15,6 +15,7 @@ import { RelationMapPreview } from "./relation-map-preview";
 const RELATION_MAP_SOURCE_STORAGE_KEY = "relationmap.source";
 const RELATION_MAP_CUSTOM_SOURCE_STORAGE_KEY = "relationmap.custom.source";
 const RELATION_MAP_ACTIVE_SAMPLE_STORAGE_KEY = "relationmap.activeSample";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export type RelationMapSample = {
   id: string;
@@ -40,6 +41,10 @@ const RELATION_MAP_SAMPLES: RelationMapSample[] = [
   },
 ];
 
+function sampleUrl(sampleId: string) {
+  return `${BASE_PATH}/samples/${sampleId}.ftmd`;
+}
+
 export function RelationMapEditor() {
   const [source, setSource] = useState(DEFAULT_RELATION_MAP_EXAMPLE);
   const [activeSample, setActiveSample] = useState("custom");
@@ -58,7 +63,7 @@ export function RelationMapEditor() {
     setSource(storedSource);
 
     if (storedSample !== "custom") {
-      fetch(`/samples/${storedSample}.ftmd`)
+      fetch(sampleUrl(storedSample))
         .then((res) => (res.ok ? res.text() : Promise.reject(res.statusText)))
         .then((text) => {
           setSource(text);
@@ -89,7 +94,7 @@ export function RelationMapEditor() {
     }
 
     try {
-      const res = await fetch(`/samples/${sampleId}.ftmd`);
+      const res = await fetch(sampleUrl(sampleId));
       if (!res.ok) throw new Error(`Failed to load sample ${sampleId}`);
       const text = await res.text();
       setSource(text);
