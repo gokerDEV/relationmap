@@ -76,9 +76,9 @@ period: 1930-1980
 
 - Fethi Naci @fethi "Fethi Naci" #f97316 [critic] [theorist]
   - > g:tip [member]
-    - !> m:yon [aligned]
-      - > e:mdd_tip_program_debate [program-debate] {yöncü tezleri TİP programına sokmak istedi}
+    - > e:mdd_tip_program_debate [program-debate] {yöncü tezleri TİP programına sokmak istedi}
     - x> g:tip [resigned]
+  - !> m:yon [aligned]
 
 - Mihri Belli @mihri "Mihri Belli" #ef4444 [theorist]
   - !> s:mdd [author] {Sovyetler Birliği çizgisi}
