@@ -331,6 +331,8 @@ export function parseRelationMap(
     }
   }
 
+  stabilizeForwardDepths(document);
+
   const finalDocument: RelationMapDocument = {
     title: document.title,
     metadata: document.metadata,
@@ -500,6 +502,130 @@ function addPersonTargetIssue(
   );
 }
 
+function stabilizeForwardDepths(document: MutableDocument): void {
+  const nodes = Array.from(document.nodesById.values());
+  const nodeIds = nodes.map((node) => node.id);
+  const adjacency = new Map<string, string[]>();
+  for (const nodeId of nodeIds) adjacency.set(nodeId, []);
+  for (const edge of document.edges) adjacency.get(edge.sourceId)?.push(edge.targetId);
+
+  const componentByNode = findStronglyConnectedComponents(nodeIds, adjacency);
+  const componentIds = new Set(componentByNode.values());
+  const componentDepth = new Map<number, number>();
+  const componentEdges = new Map<number, Set<number>>();
+  const indegree = new Map<number, number>();
+
+  for (const componentId of componentIds) {
+    componentDepth.set(componentId, 0);
+    componentEdges.set(componentId, new Set());
+    indegree.set(componentId, 0);
+  }
+
+  for (const node of nodes) {
+    const componentId = componentByNode.get(node.id);
+    if (componentId === undefined) continue;
+    componentDepth.set(
+      componentId,
+      Math.max(componentDepth.get(componentId) ?? 0, node.depth),
+    );
+  }
+
+  for (const edge of document.edges) {
+    const sourceComponent = componentByNode.get(edge.sourceId);
+    const targetComponent = componentByNode.get(edge.targetId);
+    if (
+      sourceComponent === undefined ||
+      targetComponent === undefined ||
+      sourceComponent === targetComponent
+    ) {
+      continue;
+    }
+    const outgoing = componentEdges.get(sourceComponent);
+    if (!outgoing || outgoing.has(targetComponent)) continue;
+    outgoing.add(targetComponent);
+    indegree.set(targetComponent, (indegree.get(targetComponent) ?? 0) + 1);
+  }
+
+  const queue = Array.from(componentIds)
+    .filter((componentId) => (indegree.get(componentId) ?? 0) === 0)
+    .sort((a, b) => (componentDepth.get(a) ?? 0) - (componentDepth.get(b) ?? 0));
+
+  while (queue.length > 0) {
+    const componentId = queue.shift();
+    if (componentId === undefined) break;
+    const sourceDepth = componentDepth.get(componentId) ?? 0;
+    for (const targetComponent of componentEdges.get(componentId) ?? []) {
+      componentDepth.set(
+        targetComponent,
+        Math.max(componentDepth.get(targetComponent) ?? 0, sourceDepth + 1),
+      );
+      const nextIndegree = (indegree.get(targetComponent) ?? 0) - 1;
+      indegree.set(targetComponent, nextIndegree);
+      if (nextIndegree === 0) queue.push(targetComponent);
+    }
+    queue.sort((a, b) => (componentDepth.get(a) ?? 0) - (componentDepth.get(b) ?? 0));
+  }
+
+  for (const node of nodes) {
+    const componentId = componentByNode.get(node.id);
+    if (componentId === undefined) continue;
+    node.depth = componentDepth.get(componentId) ?? node.depth;
+  }
+}
+
+function findStronglyConnectedComponents(
+  nodeIds: string[],
+  adjacency: Map<string, string[]>,
+): Map<string, number> {
+  const indexByNode = new Map<string, number>();
+  const lowLinkByNode = new Map<string, number>();
+  const stack: string[] = [];
+  const isOnStack = new Set<string>();
+  const componentByNode = new Map<string, number>();
+  let index = 0;
+  let componentId = 0;
+
+  const visit = (nodeId: string) => {
+    indexByNode.set(nodeId, index);
+    lowLinkByNode.set(nodeId, index);
+    index += 1;
+    stack.push(nodeId);
+    isOnStack.add(nodeId);
+
+    for (const nextId of adjacency.get(nodeId) ?? []) {
+      if (!indexByNode.has(nextId)) {
+        visit(nextId);
+        lowLinkByNode.set(
+          nodeId,
+          Math.min(lowLinkByNode.get(nodeId) ?? 0, lowLinkByNode.get(nextId) ?? 0),
+        );
+      } else if (isOnStack.has(nextId)) {
+        lowLinkByNode.set(
+          nodeId,
+          Math.min(lowLinkByNode.get(nodeId) ?? 0, indexByNode.get(nextId) ?? 0),
+        );
+      }
+    }
+
+    if (lowLinkByNode.get(nodeId) !== indexByNode.get(nodeId)) return;
+
+    while (stack.length > 0) {
+      const item = stack.pop();
+      if (!item) break;
+      isOnStack.delete(item);
+      componentByNode.set(item, componentId);
+      if (item === nodeId) break;
+    }
+    componentId += 1;
+  };
+
+  for (const nodeId of nodeIds) {
+    if (!indexByNode.has(nodeId)) visit(nodeId);
+  }
+
+  return componentByNode;
+}
+
 function readFrontmatter(lines: string[], metadata: Record<string, string>): number {
   if ((lines[0] ?? "").trim() !== "---") return 0;
   for (let index = 1; index < lines.length; index += 1) {
@@ -561,10 +687,7 @@ function parseNodeReference(
 
   const idMatch = value.match(/(^|\s)(@[A-Za-z0-9_-]+|[fgipemsd]:[A-Za-z0-9_-]+)/);
   let id = idMatch?.[2];
-  if (id) {
-    const matchIndex = idMatch.index ?? 0;
-    value = `${value.slice(0, matchIndex)} ${value.slice(matchIndex + (idMatch[0]?.length ?? 0))}`;
-  }
+  if (id && idMatch) value = value.replace(idMatch[0], " ");
 
   const label = normalize(value) || quotedLabel || (id ? labelFromId(id) : "");
   if (!id && allowImplicitId && label) id = `@${slug(label)}`;
@@ -775,8 +898,8 @@ function rootColor(
   rootIndex: Map<string, number>,
   nodeById: Map<string, RelationMapNode>,
 ): string {
-  const rootNode = nodeById.get(rootId);
-  if (rootNode?.color) return rootNode.color;
+  const nodeColor = nodeById.get(rootId)?.color;
+  if (nodeColor) return nodeColor;
   const index = rootIndex.get(rootId) ?? 0;
   return ROOT_COLORS[index % ROOT_COLORS.length] ?? ROOT_COLORS[0];
 }
@@ -800,27 +923,27 @@ function labelFromId(id: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function normalizeHex(hex: string): string {
-  const value = hex.toLowerCase();
-  if (value.length === 3) {
-    return `#${value[0]}${value[0]}${value[1]}${value[1]}${value[2]}${value[2]}`;
-  }
-  return `#${value}`;
-}
-
 function slug(value: string): string {
-  return (
-    normalize(value)
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "") || "node"
-  );
+  return normalize(value)
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "node";
 }
 
 function normalize(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeHex(value: string): string {
+  if (value.length === 3) {
+    return `#${value
+      .split("")
+      .map((char) => `${char}${char}`)
+      .join("")}`.toLowerCase();
+  }
+  return `#${value.toLowerCase()}`;
 }
 
 function issue(
