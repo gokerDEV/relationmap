@@ -8,7 +8,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { DEFAULT_RELATION_MAP_EXAMPLE } from "@/lib/relationmap";
+import { DEFAULT_RELATION_MAP_EXAMPLE } from "@/lib/relationmap-defaults";
 import { RelationMapHeader } from "./relation-map-header";
 import { RelationMapPreview } from "./relation-map-preview";
 
@@ -36,8 +36,8 @@ const RELATION_MAP_SAMPLES: RelationMapSample[] = [
   },
   {
     id: "turkiye-1940",
-    label: "Turkiye / Left / 1940"
-  }
+    label: "Turkiye / Left / 1940",
+  },
 ];
 
 export function RelationMapEditor() {
