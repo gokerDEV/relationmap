@@ -5,16 +5,16 @@
 The notation is subject-first. A top-level row is the person, family, or group you want to follow. Nested rows form that subject's path over time.
 
 ```markdown
-- A Person @a
+- A Person @a #7c3aed
   - > i:school "Shared School" [student]
     - > g:company "Company" [founder]
 
-- B Person @b
+- B Person @b #059669
   - > i:school [classmate]
     - > g:company [board]
 ```
 
-In this example, `A` and `B` meet at the same `i:school` node. Their paths continue from that shared school node to the same `g:company` node. The node is shared; the path color follows the top-level subject.
+In this example, `A` and `B` meet at the same `i:school` node. Their paths continue from that shared school node to the same `g:company` node. The node is shared; each path keeps the top-level subject color.
 
 ## Why not clusters?
 
@@ -32,9 +32,9 @@ Instead of writing a vague `Academic Circle` cluster, write the actual instituti
 
 If two subjects share a university, party, company, union, publication, city, region, or event, they should point to the same node id. The renderer merges repeated ids.
 
-## No person targets in relation lines
+## No person targets
 
-People are subjects, not relation targets. A relationship between people must be expressed by linking each person to the same explanatory node: an event, place, institution, group, family, publication, document, or sector.
+People are subjects, not relation targets. A relation line should not point to `@person`.
 
 Avoid:
 
@@ -43,7 +43,7 @@ Avoid:
   - ~> @b "B Person" [friend]
 ```
 
-Also avoid putting people under a relation node:
+Also avoid:
 
 ```markdown
 - A Person @a
@@ -51,34 +51,37 @@ Also avoid putting people under a relation node:
     - ~> @b "B Person" [participant]
 ```
 
-Prefer separate subject paths into the same node:
+Prefer:
 
 ```markdown
-- A Person @a
+- A Person @a #7c3aed
   - > e:school_circle "School circle" [friendship]
     - > i:school "Shared School" [place]
 
-- B Person @b
+- B Person @b #059669
   - > e:school_circle [friendship]
     - > i:school [place]
 ```
 
-For family and marriage relations, use shared family or event nodes:
+The explanation lives in the shared relation node. Each person connects to that node separately.
+
+For family relations, use a family or event node:
 
 ```markdown
-- A Person @a
+- A Person @a #7c3aed
   - > e:a_b_marriage "A-B marriage" [spouse]
-  - > f:family_ab "A-B family" [parent]
 
-- B Person @b
+- B Person @b #059669
   - > e:a_b_marriage [spouse]
-  - > f:family_ab [parent]
 
-- C Person @c
+- C Person @c #2563eb
+  - > f:family_ab "A-B family" [child]
+
+- D Person @d #dc2626
   - > f:family_ab [child]
 ```
 
-This keeps the graph readable because person nodes do not become dense hairballs. The explanation lives in the middle node.
+This keeps the graph readable because person nodes stay in the subject column instead of becoming dense hairballs.
 
 ## Node ids
 
@@ -97,11 +100,28 @@ d:id  document / source
 Examples:
 
 ```markdown
-- Aylin Soyer @aylin_soyer [academic]
+- Aylin Soyer @aylin_soyer #7c3aed [academic]
 - Demir Family f:demir_family [family]
 - Reform Party g:reform_party [party]
 - Ankara SBF i:ankara_sbf [institution]
 ```
+
+## Colors
+
+Use `#hex` directly in notation.
+
+```markdown
+- Behice Boran @behice #7c3aed [academic]
+  - > i:dtcf "DTCF" [faculty]
+    - x> e:dtcf_purge_1948 "DTCF purge" #dc2626 [purged]
+```
+
+Rules:
+
+- `@person #hex` sets that person's card color and all path edges from that subject.
+- Relation nodes are gray by default.
+- `e:/i:/g:/f:/p:/m:/s:/d #hex` gives that relation node an optional accent color.
+- Edge color always follows the top-level subject, not the relation node.
 
 ## Relation operators
 
@@ -116,20 +136,23 @@ x>   ended / split / left / disproved
 Examples:
 
 ```markdown
-- Ali Demir @ali_demir
+- Ali Demir @ali_demir #2563eb
   - > i:boun "Boğaziçi University" [student]
     - > g:demir_holding "Demir Holding" [founder]
       - > p:marmara_ports "Marmara Ports" [region]
   - > e:boun_school_circle "Boun school circle" [schoolmate]
-    - > i:boun [place]
   - x> g:old_party "Old Party" [left]
   - ?> d:report_12 "Report 12" [mentioned]
+
+- Ayşe Kara @ayse_kara #dc2626
+  - > e:boun_school_circle [schoolmate]
 ```
 
 ## Fields
 
 ```text
 "..."  first-use display label for a node
+#hex   optional node color
 [...]  relation or node tags
 (...)  date or date range
 {...}  plain note
@@ -175,12 +198,11 @@ Sibling rows are parallel relations without a stated sequence:
 ## Render rules
 
 - Repeated ids merge into one node.
-- Nodes are neutral and styled by type.
+- Node depth comes from the deepest indentation where that node is used.
+- The renderer does not repeatedly push shared nodes to the right, so repeated/cyclic references do not explode the layout.
+- Relation nodes are neutral gray unless they have an explicit `#hex` accent.
 - Edges are colored by the top-level subject.
-- Relation lines that target `@person` are shown as validation warnings.
-- When the same relation node is reused at multiple indentation depths, it is placed at its deepest/rightmost required depth.
-- After parsing, edge constraints are propagated so every relation flows left-to-right; the renderer should not draw a logical step backwards.
-- This keeps a person's route visually traceable across institutions, groups, places, events, companies, and mediated people.
+- Person targets are parser errors.
 - Shared nodes make school friendships, organizational continuity, family ties, institutional careers, monopolies, cartels, unions, party movements, and regional power relations readable without fake clusters.
 
 ## Built-in samples
@@ -194,7 +216,7 @@ union-board-network.ftmd         union -> board -> media / event / document path
 turkiye-1940.ftmd                detailed mediated Turkish left network sample
 ```
 
-Sample data should also avoid relation lines targeting people. Use event, institution, group, family, place, or document nodes to explain relationships.
+Sample data should avoid person targets. Use event, institution, group, family, place, or document nodes to explain relationships.
 
 ## Development
 
